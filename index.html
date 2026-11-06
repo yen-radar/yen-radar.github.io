@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Borrowed Demand Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  --paper:#ffffff; --side:#0f2340; --side-ink:#c9d3e3; --ink:#0f2340; --body:#2b3445; --ink2:#535c6d; --faint:#7d8493; --rule:#dfe3ea; --grid:#eef0f4;
+  --indigo:#2c5aa0; --ochre:#b8781c; --teal:#1f9478; --grey:#c6ccd6; --alert:#b3261e; --good:#1d7a3a; --band:#f2f4f8; --slate:#8fa3c2; --drag:#6b7280;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--body);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh;background:linear-gradient(to right,var(--side) 232px,var(--paper) 232px)}
+aside{color:var(--side-ink);padding:30px 22px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.name{font-size:17px;font-weight:600;line-height:1.25;margin:0 0 30px;color:#fff}
+.name span{display:block;font-weight:400;color:var(--side-ink);font-size:13.5px;margin-top:4px}
+aside nav{display:flex;flex-direction:column;gap:2px}
+aside nav a{text-decoration:none;color:var(--side-ink);padding:7px 10px;margin:0 -10px;border-radius:4px;font-size:14.5px}
+aside nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+aside nav a.on{background:rgba(255,255,255,.12);color:#fff;font-weight:500}
+aside nav a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #7fa6e0;outline-offset:2px}
+.colophon{margin-top:auto;font-size:12.5px;color:#8fa0bb;line-height:1.5}
+main{padding:44px 56px 72px;max-width:1140px}
+section{display:none}
+section.on{display:block}
+h1{font-size:34px;line-height:1.22;font-weight:500;letter-spacing:-.012em;margin:0 0 16px;max-width:30ch;color:var(--ink)}
+h2{font-size:26px;font-weight:500;letter-spacing:-.008em;margin:0 0 8px;color:var(--ink);max-width:36ch;line-height:1.25}
+.lede{color:var(--ink2);max-width:70ch;margin:0 0 32px}
+
+main a{color:var(--indigo);text-underline-offset:3px}
+.kicker{font-size:13.5px;color:var(--ink2);margin:0 0 10px}
+aside nav a em{font-style:normal;display:inline-block;width:20px;color:#8fa0bb}
+aside nav a.on em{color:#fff}
+aside nav .gap{height:14px}
+.feed{list-style:none;padding:0;margin:14px 0 0;font-size:14px}
+.feed li{display:grid;grid-template-columns:100px 110px 1fr 90px;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule)}
+.feed.compact li{grid-template-columns:96px 1fr;gap:4px 12px}
+.feed.compact li time,.feed.compact li .st{display:none}
+.feed .sev{font-weight:500;color:var(--ink)}
+.feed .sev i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:0}
+.feed .crit .sev i{background:#d03b3b}.feed .ser .sev i{background:#ec835a}.feed .watch .sev i{background:#fab219}.feed .news .sev i{background:var(--indigo)}
+.feed time{color:var(--faint)}
+.feed .what b{display:block;font-weight:500;color:var(--ink)}
+.feed .what{color:var(--ink2)}
+.feed .st{color:var(--alert);font-size:13px;text-align:right}
+.feed li.news{background:var(--band);padding-left:10px;padding-right:10px;margin:0 -10px}
+i.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px}
+@media (max-width:960px){.feed li{grid-template-columns:1fr;gap:2px}.feed .st{text-align:left}}
+.explain{margin:4px 0 8px;padding:22px 24px;background:var(--band);border-radius:6px}
+.explain h3{font-size:17px;font-weight:600;color:var(--ink);margin:0}
+.explain .def{font-size:15.5px;line-height:1.55;color:var(--ink);margin:8px 0 0;max-width:78ch}
+.props{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:18px 0 0;padding-top:16px;border-top:1px solid var(--rule)}
+.props dt{font-weight:600;color:var(--ink);font-size:14px}
+.props dd{margin:4px 0 0;font-size:14px;color:var(--body);line-height:1.5}
+.explain .src{font-size:12.5px;color:var(--ink2);margin:16px 0 0;max-width:none}
+@media (max-width:960px){.props{grid-template-columns:1fr}}
+.steph{display:flex;align-items:baseline;gap:14px;font-size:22px;font-weight:500;color:var(--ink);margin:56px 0 18px;max-width:none}
+.steph span{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;font-size:14px;font-weight:600;transform:translateY(-3px)}
+.ex.narrow{max-width:780px}
+p.after{max-width:70ch;margin:-28px 0 0;color:var(--ink2)}
+.radar-links{max-width:72ch;font-size:15.5px}
+.radar-links ul{padding-left:20px;margin:10px 0}
+.radar-links li{margin-bottom:8px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.presets button{font:inherit;font-size:13px;padding:6px 11px;border:1px solid #c4cad4;border-radius:4px;background:var(--paper);color:var(--ink);cursor:pointer}
+.presets button:hover{background:var(--band)}
+.presets button:focus-visible{outline:2px solid var(--indigo);outline-offset:1px}
+aside nav .grp{font-size:12.5px;color:#8fa0bb;margin:16px 0 4px}
+h2.part{margin-top:20px;padding-top:36px;border-top:1px solid var(--rule);max-width:none}
+.ex{margin:0 0 52px;padding-top:18px;border-top:2px solid var(--ink)}
+.ex .num{font-size:13px;color:var(--faint);margin:0 0 4px}
+.ex h3{font-size:19px;line-height:1.3;font-weight:500;color:var(--ink);margin:0;max-width:60ch}
+.ex .units{font-size:13px;color:var(--ink2);margin:4px 0 0}
+.ex .src{font-size:12px;color:var(--faint);margin:10px 0 0;max-width:90ch}
+.ex.half{margin-bottom:44px}
+.chart{position:relative;height:300px;margin-top:14px}
+.chart.tall{height:360px}
+.chart.short{height:220px}
+.figs{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin:30px 0 44px;padding:20px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.figs dt{font-size:13px;color:var(--ink2)}
+.figs dd{margin:4px 0 0;font-size:26px;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
+.figs dd small{display:block;font-size:12.5px;color:var(--faint);font-weight:400;letter-spacing:0;margin-top:2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.side{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:44px}
+.key{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:10px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.key i.ln{height:2px;width:16px;border-radius:0;vertical-align:3px}
+.key i.dash{height:0;width:16px;border-radius:0;border-top:2px dashed var(--alert);vertical-align:3px;background:none}
+.key i.band{background:var(--band);border:1px solid var(--rule)}
+.controls{display:flex;gap:24px;align-items:end;flex-wrap:wrap;margin:0 0 24px}
+label{font-size:13px;color:var(--ink2);display:flex;flex-direction:column;gap:4px}
+select,input[type=number]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid #c4cad4;border-radius:4px;background:var(--paper);color:var(--ink)}
+input[type=number]{width:150px}
+input[type=range]{width:100%;accent-color:var(--indigo);margin:8px 0 0}
+.range-ends{display:flex;justify-content:space-between;font-size:12.5px;color:var(--faint)}
+.readout{font-size:28px;font-weight:500;letter-spacing:-.01em;margin:22px 0 4px;color:var(--ink)}
+.pair{display:flex;gap:40px;margin:18px 0}
+.pair div{font-size:13px;color:var(--ink2)}
+.pair b{display:block;font-size:24px;font-weight:500;color:var(--ink)}
+.neg{color:var(--alert)!important} .pos{color:var(--good)!important}
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:18px}
+th,td{text-align:left;padding:9px 10px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:500;color:var(--ink2);font-size:13px}
+td.n,th.n{text-align:right}
+.events{list-style:none;padding:0;margin:14px 0 0;font-size:14px}
+.events li{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule)}
+.events time{color:var(--faint)}
+.todo{border-left:3px solid var(--ochre);padding:2px 0 2px 16px;margin-top:28px;font-size:14px;color:var(--ink2)}
+.todo b{color:var(--ink);display:block;margin-bottom:4px}
+.watch{margin:14px 0 0;padding-left:20px;font-size:14.5px;color:var(--body)}
+.watch li{margin-bottom:10px}
+.method dl{display:grid;grid-template-columns:180px 1fr;gap:12px 24px;margin:0;font-size:14.5px;max-width:880px}
+.method dt{color:var(--ink2)}
+.method dd{margin:0}
+.toolbar{display:flex;gap:16px 24px;align-items:end;flex-wrap:wrap;margin:14px 0 0}
+.toolbar.wide{margin:0 0 28px}
+.seg{display:inline-flex;border:1px solid #c4cad4;border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;border:0;border-right:1px solid #c4cad4;background:var(--paper);color:var(--ink2);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--band)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px}
+.stack{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+label.check{flex-direction:row;align-items:center;gap:8px;font-size:14px;color:var(--body);cursor:pointer}
+label.check input{width:16px;height:16px;accent-color:var(--indigo)}
+label.inline{flex-direction:row;align-items:center;gap:10px}
+label.inline b{font-weight:500;color:var(--ink)}
+.stats{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin:22px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-size:14px}
+.stats dt{color:var(--ink2)}
+.stats dd{margin:0;text-align:right;font-weight:500;color:var(--ink)}
+.stats dd small{font-weight:400;color:var(--faint);margin-left:4px}
+.stats dd.muted{color:var(--faint)}
+#fcTable{margin-top:12px}
+@media (max-width:960px){
+  .shell{grid-template-columns:1fr;background:var(--paper)}
+  aside{position:static;height:auto;padding:18px 20px;background:var(--side)}
+  .name{margin-bottom:12px}
+  aside nav{flex-direction:row;flex-wrap:wrap;gap:4px}
+  aside nav a{margin:0}
+  .colophon{display:none}
+  main{padding:28px 20px 48px}
+  h1{font-size:27px}
+  .figs{grid-template-columns:1fr 1fr}
+  .two,.side{grid-template-columns:1fr}
+  .method dl{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+  <p class="name">Borrowed Demand Radar<span>An early-warning service for luxury demand in Japan</span></p>
+  <nav id="nav">
+    <a href="#case">The case</a>
+    <p class="grp">The Radar</p>
+    <a href="#ledger"><em>1</em>Borrowed-demand ledger</a>
+    <a href="#pricegap"><em>2</em>Price-gap map</a>
+    <a href="#shocks"><em>3</em>Shock alerts</a>
+    <a href="#scenario">Scenario questions</a>
+    <a href="#brief">Monthly brief</a>
+    <div class="gap"></div>
+    <a href="#method">Method and sources</a>
+  </nav>
+  <p class="colophon">Prototype made for the Statistics and Financial Data Analysis course, by group C7. </p>
+</aside>
+<main>
+
+<!-- CASE -->
+<section id="s-case">
+  <h1>Japan's luxury boom is borrowed, and it can be called back</h1>
+  <p class="lede" id="lede"></p>
+  <div class="explain">
+    <h3>Borrowed demand</h3>
+    <p class="def">Sales recorded in Japan that originate in another market and are drawn there by a temporary price advantage, chiefly the weak yen. The demand is displaced, not created: it inflates reported growth in Japan, depresses it in the home market, and reverses when the advantage disappears.</p>
+    <dl class="props">
+      <div><dt>Displaced</dt><dd>It comes at the expense of home markets. Hermès grew faster in Japan than in the rest of Asia in 14 of 16 quarters.</dd></div>
+      <div><dt>Price-driven</dt><dd>It moves with the yen through spending per shopper (elasticity 1.15), not through the number of visitors.</dd></div>
+      <div><dt>Reversible</dt><dd>It leaves when the yen recovers or travel is disrupted, as after China's advisory of November 2025.</dd></div>
+    </dl>
+    <p class="src">Measured here as the share of duty-free sales that depends on the yen being weaker than its 2015–2019 average. The department store data do not record nationality, so the split by origin uses visitor arrival shares and is an estimate.</p>
+  </div>
+  <h2 class="steph"><span>1</span>The boom is about spending per shopper</h2>
+    <div class="ex narrow">
+      <p class="num">Exhibit 2</p>
+      <h3>Each duty-free shopper spends about half as much again as before COVID</h3>
+      <p class="units">Average duty-free spending per shopper by period, ¥ thousand</p>
+      <div class="chart"><canvas id="cPeriod"></canvas></div>
+      <p class="src">Source: Japan Department Stores Association; COVID years 2020–2022 excluded</p>
+    </div>
+  <h2 class="steph"><span>2</span>The yen drives that spending, not the number of visitors</h2>
+  <div class="ex">
+    <p class="num">Exhibit 4</p>
+    <h3 id="expTitle"></h3>
+    <p class="units">Monthly change, seasonally adjusted, %. Each dot is one month outside COVID.</p>
+    <div class="side">
+      <div><div class="chart tall"><canvas id="cScatter"></canvas></div>
+        <div class="key" id="expKey"></div></div>
+      <div>
+        <div class="stack">
+          <label>Exchange rate
+            <select id="expCur"><option value="cny">Yen per yuan</option><option value="krw">Yen per Korean won</option><option value="usd">Yen per US dollar</option></select></label>
+          <label>Outcome
+            <select id="expOut"><option value="sps">Spending per shopper</option><option value="sales">Total duty-free sales</option><option value="shop">Number of shoppers</option><option value="kr">Korean arrivals</option><option value="us">US arrivals</option></select></label>
+          <label class="check"><input type="checkbox" id="expPer"> Colour months by period</label>
+          <div class="presets" role="group" aria-label="Quick tests"><button data-p="cny,sps">Spending vs yen</button><button data-p="cny,shop">Shoppers vs yen</button><button data-p="usd,us">Placebo: US visitors vs dollar</button></div>
+        </div>
+        <dl class="stats" id="expStats"></dl>
+        <p class="src" id="expNote"></p>
+      </div>
+    </div>
+  </div>
+  <h2 class="steph"><span>3</span>The demand was taken from home markets</h2>
+    <div class="ex narrow">
+      <p class="num">Exhibit 1</p>
+      <h3>Hermès grew faster in Japan than in the rest of Asia in 14 of 16 quarters</h3>
+      <p class="units">Year-on-year revenue growth at constant exchange rates, %</p>
+      <div class="chart"><canvas id="cHermes"></canvas></div>
+      <div class="key"><span><i style="background:var(--indigo)"></i>Japan</span><span><i style="background:var(--ochre)"></i>Asia-Pacific excluding Japan</span></div>
+      <p class="src">Source: Hermès quarterly revenue releases, Q4 2022 to Q3 2026</p>
+    </div>
+  <h2 class="steph"><span>4</span>So it is reversible</h2>
+  <div class="ex narrow">
+    <p class="num">Exhibit</p>
+    <h3 id="shareTitle"></h3>
+    <p class="units">Share of monthly duty-free sales that depends on the yen being weaker than its 2015–2019 average, %</p>
+    <div class="chart"><canvas id="cShare"></canvas></div>
+    <div class="key"><span><i class="ln" style="background:var(--indigo)"></i>Central estimate (elasticity 1.15)</span><span><i style="background:rgba(44,90,160,.18)"></i>95% range of the elasticity</span></div>
+    <p class="src" id="shareSrc"></p>
+  </div>
+  <h2 class="steph"><span>5</span>It can also be withdrawn overnight, for reasons the yen cannot predict</h2>
+  <div class="ex narrow">
+    <p class="num">Exhibit 10</p>
+    <h3>Since the advisory, Korea and Taiwan have replaced China as the largest sources of visitors</h3>
+    <p class="units">Share of visitor arrivals to Japan, %</p>
+    <div class="chart short"><canvas id="cMix"></canvas></div>
+    <div class="key"><span><i class="ln" style="background:var(--indigo)"></i>China</span><span><i class="ln" style="background:var(--ochre)"></i>South Korea</span><span><i class="ln" style="background:var(--teal)"></i>Taiwan</span><span><i class="dash"></i>Chinese travel advisory, 14 November 2025</span></div>
+    <p class="src">Source: Japan National Tourism Organization, monthly arrivals by nationality</p>
+  </div>
+  <p class="after">The yen-based forecast missed this: after the advisory it ran too high in 9 of the next 10 months, by 5.8% a month on average. <a href="#shocks" data-go="shocks">See Shock alerts</a></p>
+  <h2 class="steph"><span>6</span>Hence the Radar</h2>
+  <div class="radar-links">
+    <p>Borrowed demand is large, measurable and reversible, and it can leave for reasons the exchange rate does not show. The Radar turns this into three tools for the Asia-Pacific team:</p>
+    <ul>
+      <li><a href="#ledger" data-go="ledger">Borrowed-demand ledger</a>: how much of each month's sales in Japan is borrowed, and from where.</li>
+      <li><a href="#pricegap" data-go="pricegap">Price-gap map</a>: what the same item costs each shopper in Japan after the tax refund.</li>
+      <li><a href="#shocks" data-go="shocks">Shock alerts</a>: political and travel shocks, read from the news before they reach sales.</li>
+    </ul>
+    <p><a href="#scenario" data-go="scenario">Scenario questions</a> test what a move in the yen would do, and the <a href="#brief" data-go="brief">monthly brief</a> brings everything together for the team.</p>
+  </div>
+</section>
+
+
+
+<!-- LEDGER -->
+<section id="s-ledger">
+  <h2>Borrowed-demand ledger</h2>
+  <p class="lede">Splits monthly sales in Japan into local demand and demand borrowed from China, Korea, Taiwan and other markets. Borrowed demand is what spending per shopper would lose if the yen per yuan went back to the baseline you choose (the group's estimate: spending rises 1.15% for every 1% the yen weakens). It is split by origin using each month's share of visitor arrivals.</p>
+  <div class="controls">
+    <label>Compare with the yen rate of
+      <select id="baseSel"><option value="pre">2015–2019, before COVID</option><option value="boom">2023–2024, the boom</option></select>
+    </label>
+    <label>Elasticity<input type="number" id="elas" value="1.15" step="0.05" min="0" max="3" style="width:90px"></label>
+    <label class="check"><input type="checkbox" id="splitOrigin" checked> Split borrowed demand by origin</label>
+  </div>
+  <div class="ex">
+    <p class="num">Exhibit 9</p>
+    <h3 id="ledgerTitle"></h3>
+    <p class="units">Duty-free sales per month, ¥ billion</p>
+    <div class="chart tall"><canvas id="cLedger"></canvas></div>
+    <div class="key" id="ledgerKey"></div>
+    <p class="src">Source: JDSA, ECB, group elasticity (Robust_Corr G). The department store figures do not record nationality, so the split by origin uses arrival shares and is an estimate.</p>
+  </div>
+</section>
+
+<!-- PRICE GAP -->
+<section id="s-pricegap">
+  <h2>Price-gap map</h2>
+  <p class="lede">The price of the same item in Asia in each shopper's currency after the tax refund. Enter the list price of one item in each country. The page converts the Japanese price after the 10% tax refund into each shopper's currency. In the full product, these prices would be collected daily from the brands' own websites.</p>
+  <div class="side">
+    <div>
+      <div class="controls" style="margin-bottom:6px">
+        <label>Item<select id="pItem"><option value="nf">Louis Vuitton Neverfull MM, Monogram</option><option value="own">Your own item</option></select></label>
+        <label>Japan, ¥ incl. tax<input type="number" id="pJp" value="277200" step="100"></label>
+        <label>China, CNY<input type="number" id="pCn" value="15800" step="100"></label>
+        <label>Korea, KRW<input type="number" id="pKr" placeholder="not verified" step="10000"></label>
+        <label>Exchange rate of<select id="pMonth"></select></label>
+      </div>
+      <p class="src" style="font-size:12.5px;color:var(--faint);margin:0" id="pNote"></p>
+      <table>
+        <thead><tr><th>Shopper</th><th class="n">Price at home</th><th class="n">Price in Japan after refund</th><th class="n">Difference</th></tr></thead>
+        <tbody id="pTable"></tbody>
+      </table>
+    </div>
+    <div class="ex">
+      <p class="num">Exhibit</p>
+      <h3 id="gapTitle"></h3>
+      <p class="units">Price of the same item for each shopper, in their own currency</p>
+      <div class="chart short"><canvas id="cGap"></canvas></div>
+      <div class="key"><span><i style="background:var(--grey)"></i>Price at home</span><span><i style="background:var(--indigo)"></i>Price in Japan after the 10% refund</span></div>
+      <p class="src" id="gapSrc"></p>
+    </div>
+  </div>
+</section>
+
+<!-- SHOCKS -->
+<section id="s-shocks">
+  <h2>Shock alerts</h2>
+  <p class="lede">Travel advisories, visa changes and boycott calls detected in Chinese, Korean and Japanese sources before sales change. Until the news reader is built, the Radar raises alerts from the monthly data, shown here.</p>
+  <div class="ex">
+    <p class="num">Exhibit</p>
+    <h3 id="feedTitle"></h3>
+    <p class="units">Alerts raised by rules on the monthly data, newest first</p>
+    <ul class="feed" id="feed"></ul>
+    <p class="src">Rules: Chinese arrivals down 20% or more on a year earlier; duty-free shoppers down 10% or more. <span id="ruleNote"></span> Data months are published by JNTO and JDSA around three weeks after the month ends.</p>
+  </div>
+  <div class="todo" style="margin:-20px 0 52px"><b>Why the Radar also reads the news</b><span id="leadText"></span></div>
+  <h2 class="part">Regression forecasts</h2>
+  <p class="lede">In progress. Choose where training ends, then switch on the shock alert to see what the Radar's shock reader would have added after China's travel advisory.</p>
+  <div class="toolbar wide">
+    <label>Series<select id="fcSel"><option value="sales">Duty-free sales</option><option value="sps">Spending per shopper</option></select></label>
+    <label>Train the model up to<select id="fcEnd"><option value="2023-12">December 2023</option><option value="2024-06">June 2024</option><option value="2024-12" selected>December 2024</option><option value="2025-06">June 2025</option></select></label>
+    <label class="check"><input type="checkbox" id="fcAlert"> Shock alert from 14 November 2025</label>
+  </div>
+  <div class="side">
+    <div>
+      <div class="ex">
+        <p class="num">Exhibit 12</p>
+        <h3 id="fcTitle"></h3>
+        <p class="units" id="fcUnits"></p>
+        <div class="chart"><canvas id="cFc"></canvas></div>
+        <div class="key" id="fcKey"></div>
+        <p class="src" id="fcNote"></p>
+      </div>
+    </div>
+    <div>
+      <div class="ex">
+        <h3>Forecast accuracy</h3>
+        <table id="fcTable"></table>
+        <p class="src">RMSE in log points over every test month. Mean error from November 2025; negative means the forecast was too high.</p>
+      </div>
+      <div class="ex">
+        <h3>What happened</h3>
+        <ul class="events">
+          <li><time>14 Nov 2025</time><span>Beijing advises Chinese citizens against travel to Japan</span></li>
+          <li><time>Dec 2025</time><span>Sales to Chinese customers fall about 40% at some department stores</span></li>
+          <li><time>Feb 2026</time><span>Chinese arrivals down 45.2% on the year; Korean and Taiwanese arrivals at records</span></li>
+        </ul>
+        <p class="src">Source: IGDS, January 2026; Travel Voice and JNTO, 2026</p>
+        <div class="todo"><b>How the alert is simulated</b>The shock reader is not built yet. Here the alert tells the model a shock has started, and the model then learns its size from each month of actual sales it sees after the alert. A real shock reader would also estimate the size from news before sales data arrive.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIO -->
+<section id="s-scenario">
+  <h2>Scenario questions</h2>
+  <p class="lede">If the yen appreciates by 10%, how much demand leaves Japan, and to which market? Move the slider to ask. Answers use the last 12 months of sales and the group's monthly elasticities.</p>
+  <div class="side">
+    <div>
+      <div class="range-ends"><span>Yen 20% weaker</span><span>Yen 20% stronger</span></div>
+      <input type="range" id="fx" min="-20" max="20" step="1" value="10" aria-label="Change in the yen against the yuan">
+      <p class="readout" id="fxLabel"></p>
+      <div class="pair">
+        <div>Spending per shopper<b id="dSps"></b></div>
+        <div>Total duty-free sales<b id="dSales"></b></div>
+      </div>
+      <p id="scenText" style="max-width:60ch"></p>
+      <table id="scenOrigin" style="max-width:420px"></table>
+      <p class="src" style="font-size:12.5px;color:var(--faint);margin-top:8px">Split by origin uses the average share of visitor arrivals over the last 12 months.</p>
+      <p class="src" style="font-size:12.5px;color:var(--faint)">Elasticities of 1.15 for spending per shopper and 1.75 for total sales, estimated on 102 months of changes. The yen explains about a fifth of monthly swings, so treat these as central estimates. <span id="scenRange"></span></p>
+    </div>
+    <div class="ex" style="margin-bottom:0">
+      <p class="num">Exhibit</p>
+      <h3 id="scenTitle"></h3>
+      <p class="units">Change in duty-free demand for a given move in the yen against the yuan, %</p>
+      <div class="chart"><canvas id="cScen"></canvas></div>
+      <div class="key"><span><i class="ln" style="background:var(--indigo)"></i>Total duty-free sales</span><span><i class="ln" style="background:var(--ochre)"></i>Spending per shopper</span><span><i style="background:rgba(44,90,160,.15)"></i>Yearly yen moves seen since 2015</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- BRIEF -->
+<section id="s-brief">
+  <p class="kicker" id="briefFor"></p>
+  <h2>Monthly brief</h2>
+  <dl class="figs">
+    <div><dt>Borrowed share of sales in Japan</dt><dd id="b1"></dd></div>
+    <div><dt>Yen per yuan</dt><dd id="b2"></dd></div>
+    <div><dt>China's share of arrivals</dt><dd id="b3"></dd></div>
+    <div><dt>Active alerts</dt><dd id="b4"></dd></div>
+  </dl>
+  <div class="side">
+    <div class="ex">
+      <p class="num">Exhibit</p>
+      <h3 id="originTitle"></h3>
+      <p class="units">Borrowed demand over the last 12 months from China, South Korea and Taiwan, ¥ billion (estimate)</p>
+      <div class="chart short"><canvas id="cOrigin"></canvas></div>
+      <p class="src">Split by each month's share of visitor arrivals. Visitors from other countries are left out: our analysis covers the yen against Asian currencies. The department store figures do not record nationality, so this is an estimate.</p>
+    </div>
+    <div>
+      <div class="ex">
+        <h3>Shifts to watch</h3>
+        <p class="units" id="shiftUnits"></p>
+        <ol class="watch" id="shifts"></ol>
+      </div>
+      <div class="ex">
+        <h3>Latest alerts</h3>
+        <ul class="feed compact" id="briefAlerts"></ul>
+        <p class="src"><a href="#shocks" data-go="shocks">See all alerts</a></p>
+      </div>
+    </div>
+  </div>
+  <div class="ex" style="border-top-width:1px">
+    <h3>Ask a scenario question</h3>
+    <p style="margin:8px 0 0;max-width:70ch">If the yen appreciates by 10%, how much demand leaves Japan, and to which market? <a href="#scenario" data-go="scenario">Open scenario questions</a></p>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="s-method" class="method">
+  <h2>Method and sources</h2>
+  <p class="lede">Everything on this site is computed from the group's Part 2 workbook. The two language-model components are described but not yet built.</p>
+  <dl>
+    <dt>Exchange rates</dt><dd>European Central Bank euro reference rates (EUR/JPY, EUR/CNY, EUR/KRW), daily, averaged by month. January 2015 to September 2026.</dd>
+    <dt>Arrivals</dt><dd>Japan National Tourism Organization, visitor arrivals by nationality, monthly to August 2026.</dd>
+    <dt>Duty-free sales</dt><dd>Japan Department Stores Association, duty-free sales and number of shoppers, monthly to August 2026. All product categories.</dd>
+    <dt>Home-market check</dt><dd>Hermès quarterly revenue for Japan and Asia-Pacific excluding Japan, constant exchange rates, Q4 2022 to Q3 2026.</dd>
+    <dt>Correlations</dt><dd>Seasonally adjusted monthly log changes, so no two observations overlap. The overlapping year-on-year correlations from Part 1 are not used.</dd>
+    <dt>Borrowed demand</dt><dd>Sales × (1 − (baseline yen per yuan ÷ actual yen per yuan)<sup>elasticity</sup>). It applies the group's elasticity, so it is the tool's estimate, not a finding. The range uses the 95% confidence interval of the elasticity.</dd>
+    <dt>Prices</dt><dd>Louis Vuitton Neverfull MM list prices as reported in 2026: Japan ¥277,200 (Weekly Luxe Drop, April 2026), mainland China ¥15,800 (Sina, August 2026). The Korean price could not be verified.</dd>
+    <dt>Forecast</dt><dd>Monthly log change in spending (or sales) on its calendar-month average plus the month's change in yen per yuan. Trained on 81 months, tested on 20.</dd>
+    <dt>Not yet built</dt><dd>The product matcher, which would read prices from brand websites, and the shock reader, which would score news in three languages.</dd>
+  </dl>
+  <h2 class="part">Technical checks</h2>
+  <p class="lede">The analyses behind the numbers on this site, from the group's workbook.</p>
+  <div class="ex">
+    <p class="num">Exhibit 3</p>
+    <h3 id="fxTitle"></h3>
+    <p class="units" id="fxUnits"></p>
+    <div class="toolbar">
+      <div class="seg" id="fxCur" role="group" aria-label="Currency"><button data-v="cny">Yuan</button><button data-v="krw">Korean won</button><button data-v="usd">US dollar</button></div>
+      <div class="seg" id="fxRange" role="group" aria-label="Period"><button data-v="all">2015–2026</button><button data-v="pre">2015–2019</button><button data-v="post">2023–2026</button></div>
+    </div>
+    <div class="chart"><canvas id="cFx"></canvas></div>
+    <div class="key"><span><i class="ln" style="background:var(--indigo)"></i>Yen per unit of currency</span><span><i class="band"></i>COVID border closures, 2020–2022</span><span><i class="dash"></i>Travel advisory, November 2025</span></div>
+    <p class="src">Source: European Central Bank euro reference rates, daily averaged by month</p>
+  </div>
+  <div class="two">
+    <div class="ex">
+      <p class="num">Exhibit 6</p>
+      <h3 id="rollTitle"></h3>
+      <p class="units" id="rollUnits"></p>
+      <div class="toolbar"><label class="inline">Window <input type="range" id="rollN" min="12" max="48" step="6" value="24" style="width:160px"> <b id="rollNLab"></b></label></div>
+      <div class="chart"><canvas id="cRoll"></canvas></div>
+      <p class="src">Uses the exchange rate and outcome chosen in the explorer on The case page. Windows need at least three quarters of their months outside COVID.</p>
+    </div>
+    <div class="ex">
+      <p class="num">Exhibit 7</p>
+      <h3>A simple regression on the yen beats machine learning out of sample</h3>
+      <p class="units">Forecast error for spending per shopper, January 2025 to August 2026 (RMSE, log points)</p>
+      <div class="chart"><canvas id="cModels"></canvas></div>
+      <p class="src">Source: group workbook, Model_Test. Trained on 81 months to December 2024, tested on 20 months.</p>
+    </div>
+  </div>
+    <div class="ex">
+      <p class="num">Exhibit 8</p>
+      <h3>Duty-free sales jumped 86% in 2024, then fell 13% in 2025 although the yen stayed weak</h3>
+      <p class="units">Annual duty-free sales at Japanese department stores, ¥ billion</p>
+      <div class="chart"><canvas id="cAnnual"></canvas></div>
+      <p class="src">Source: Japan Department Stores Association. 2026 covers January to August.</p>
+    </div>
+</section>
+
+</main>
+</div>
+
+<script>
+const D = {"monthly":[{"m":"2015-01","period":"Pre-COVID","jpycny":19.021899560901808,"jpykrw":10.856972223778776,"cn":226214,"kr":358093,"tw":217035,"us":62081,"tot":1218393,"sales":12.47,"shop":153000,"sps":81503.26797385621,"eurjpy":137.46999999999997,"jpyusd":118.29107388710412,"insample":false},{"m":"2015-02","period":"Pre-COVID","jpycny":18.980579172180352,"jpykrw":10.770606223450537,"cn":359080,"kr":321576,"tw":277626,"us":59157,"tot":1386982,"sales":15.36,"shop":177000,"sps":86779.66101694915,"eurjpy":134.68600000000004,"jpyusd":118.66973871440975,"insample":true},{"m":"2015-03","period":"Pre-COVID","jpycny":19.284856298409423,"jpykrw":10.814145108812008,"cn":338121,"kr":268156,"tw":277934,"us":95609,"tot":1525879,"sales":13.83,"shop":176000,"sps":78579.54545454546,"eurjpy":130.40954545454545,"jpyusd":120.32974176798962,"insample":true},{"m":"2015-04","period":"Pre-COVID","jpycny":19.28360441203964,"jpykrw":11.017076960607767,"cn":405731,"kr":304619,"tw":335140,"us":95891,"tot":1764691,"sales":19.75,"shop":241000,"sps":81950.20746887967,"eurjpy":128.93500000000003,"jpyusd":119.61351850305681,"insample":true},{"m":"2015-05","period":"Pre-COVID","jpycny":19.482150254066912,"jpykrw":11.04309411191512,"cn":387170,"kr":315389,"tw":339677,"us":92184,"tot":1641734,"sales":16.09,"shop":202000,"sps":79653.46534653465,"eurjpy":134.748,"jpyusd":120.85510177540795,"insample":true},{"m":"2015-06","period":"Pre-COVID","jpycny":19.937670895535057,"jpykrw":11.10988568604027,"cn":462248,"kr":251504,"tw":345243,"us":102103,"tot":1602198,"sales":16.43,"shop":209000,"sps":78612.44019138756,"eurjpy":138.73954545454544,"jpyusd":123.7284700293079,"insample":true},{"m":"2015-07","period":"Pre-COVID","jpycny":19.87452441939999,"jpykrw":10.761981255412167,"cn":576868,"kr":343799,"tw":361683,"us":98201,"tot":1918356,"sales":18.52,"shop":244000,"sps":75901.6393442623,"eurjpy":135.68130434782609,"jpyusd":123.39394945888344,"insample":true},{"m":"2015-08","period":"Pre-COVID","jpycny":19.415616639337188,"jpykrw":10.439718204467082,"cn":591510,"kr":390971,"tw":313929,"us":76926,"tot":1817023,"sales":17.16,"shop":229000,"sps":74934.49781659388,"eurjpy":137.12380952380954,"jpyusd":123.10191518467853,"insample":true},{"m":"2015-09","period":"Pre-COVID","jpycny":18.87023596063782,"jpykrw":10.139640851263371,"cn":491201,"kr":301645,"tw":302897,"us":76279,"tot":1612208,"sales":13.86,"shop":192000,"sps":72187.5,"eurjpy":134.8509090909091,"jpyusd":120.17531778373694,"insample":true},{"m":"2015-10","period":"Pre-COVID","jpycny":18.89940462727884,"jpykrw":10.484684166941468,"cn":445562,"kr":370842,"tw":343601,"us":96208,"tot":1829265,"sales":17.26,"shop":232000,"sps":74396.55172413793,"eurjpy":134.83909090909094,"jpyusd":120.01602123217845,"insample":true},{"m":"2015-11","period":"Pre-COVID","jpycny":19.239977916292165,"jpykrw":10.619646542084087,"cn":362950,"kr":359845,"tw":296499,"us":88707,"tot":1647550,"sales":15.6,"shop":210000,"sps":74285.71428571429,"eurjpy":131.59714285714284,"jpyusd":122.57558015754736,"insample":true},{"m":"2015-12","period":"Pre-COVID","jpycny":18.856135252186167,"jpykrw":10.360200253964326,"cn":347034,"kr":415656,"tw":265811,"us":89912,"tot":1773130,"sales":17.76,"shop":230000,"sps":77217.39130434782,"eurjpy":132.3577272727273,"jpyusd":121.6838419042366,"insample":true},{"m":"2016-01","period":"Pre-COVID","jpycny":17.974178231135287,"jpykrw":9.813981483039377,"cn":475116,"kr":514889,"tw":320963,"us":75909,"tot":1851895,"sales":17.34,"shop":250000,"sps":69360,"eurjpy":128.32349999999997,"jpyusd":118.16541048744664,"insample":true},{"m":"2016-02","period":"Pre-COVID","jpycny":17.526829923680136,"jpykrw":9.434655204165225,"cn":498903,"kr":490845,"tw":348971,"us":67616,"tot":1891375,"sales":18.36,"shop":250000,"sps":73440,"eurjpy":127.3461904761905,"jpyusd":114.79918609842375,"insample":true},{"m":"2016-03","period":"Pre-COVID","jpycny":17.3616587498978,"jpykrw":9.535817486418354,"cn":498053,"kr":374057,"tw":328400,"us":116207,"tot":2009550,"sales":15.7,"shop":230000,"sps":68260.86956521739,"eurjpy":125.38523809523811,"jpyusd":112.96306624394555,"insample":true},{"m":"2016-04","period":"Pre-COVID","jpycny":16.918748804843503,"jpykrw":9.556296373591971,"cn":514866,"kr":353660,"tw":384165,"us":114153,"tot":2081697,"sales":17.99,"shop":260000,"sps":69192.30769230769,"eurjpy":124.28714285714284,"jpyusd":109.60847965127263,"insample":true},{"m":"2016-05","period":"Pre-COVID","jpycny":16.6811691772215,"jpykrw":9.26793660453738,"cn":507095,"kr":302088,"tw":375475,"us":111980,"tot":1893574,"sales":13.48,"shop":230000,"sps":58608.69565217391,"eurjpy":123.21363636363635,"jpyusd":108.93170018163985,"insample":true},{"m":"2016-06","period":"Pre-COVID","jpycny":16.00212463502025,"jpykrw":9.03812565289591,"cn":582452,"kr":347365,"tw":397840,"us":125353,"tot":1985722,"sales":13.04,"shop":238000,"sps":54789.91596638656,"eurjpy":118.45318181818183,"jpyusd":105.48948331417286,"insample":true},{"m":"2016-07","period":"Pre-COVID","jpycny":15.593238903045195,"jpykrw":9.117549998191746,"cn":731386,"kr":447008,"tw":397002,"us":117636,"tot":2296451,"sales":14.63,"shop":279000,"sps":52437.27598566308,"eurjpy":115.24999999999997,"jpyusd":104.12409277272742,"insample":true},{"m":"2016-08","period":"Pre-COVID","jpycny":15.225591869138109,"jpykrw":9.111440710062721,"cn":676966,"kr":458927,"tw":333242,"us":88783,"tot":2049234,"sales":12.63,"shop":232000,"sps":54439.65517241379,"eurjpy":113.48739130434782,"jpyusd":101.22193353240002,"insample":true},{"m":"2016-09","period":"Pre-COVID","jpycny":15.266034713096605,"jpykrw":9.180667110939641,"cn":522302,"kr":430614,"tw":347522,"us":96808,"tot":1918246,"sales":12.42,"shop":222000,"sps":55945.94594594595,"eurjpy":114.21818181818183,"jpyusd":101.8705455960692,"insample":true},{"m":"2016-10","period":"Pre-COVID","jpycny":15.427989793141684,"jpykrw":9.209277237576933,"cn":506162,"kr":449555,"tw":354457,"us":119477,"tot":2135904,"sales":14.99,"shop":252000,"sps":59484.12698412698,"eurjpy":114.47333333333331,"jpyusd":103.8208225543842,"insample":true},{"m":"2016-11","period":"Pre-COVID","jpycny":15.826733529097277,"jpykrw":9.304674074901955,"cn":432802,"kr":426918,"tw":300739,"us":103761,"tot":1875404,"sales":14.5,"shop":237000,"sps":61181.43459915612,"eurjpy":116.93272727272728,"jpyusd":108.28152556855251,"insample":true},{"m":"2016-12","period":"Pre-COVID","jpycny":16.770376808076534,"jpykrw":9.803531924631931,"cn":427462,"kr":494376,"tw":278736,"us":105036,"tot":2050648,"sales":19.24,"shop":280000,"sps":68714.28571428571,"eurjpy":122.3947619047619,"jpyusd":116.09206823817416,"insample":true},{"m":"2017-01","period":"Pre-COVID","jpycny":16.687741203037223,"jpykrw":9.736494051911256,"cn":630570,"kr":625415,"tw":350765,"us":88183,"tot":2295668,"sales":21.7,"shop":330000,"sps":65757.57575757576,"eurjpy":122.13590909090912,"jpyusd":115.06614079488863,"insample":true},{"m":"2017-02","period":"Pre-COVID","jpycny":16.429254047225488,"jpykrw":9.882915479804739,"cn":509090,"kr":599745,"tw":342951,"us":73587,"tot":2035771,"sales":20.17,"shop":300000,"sps":67233.33333333333,"eurjpy":120.16799999999998,"jpyusd":112.91172781215202,"insample":true},{"m":"2017-03","period":"Pre-COVID","jpycny":16.375757118060267,"jpykrw":9.963077510664661,"cn":508979,"kr":488349,"tw":339884,"us":130922,"tot":2205664,"sales":19.66,"shop":296000,"sps":66418.91891891892,"eurjpy":120.67608695652173,"jpyusd":112.94293341146215,"insample":true},{"m":"2017-04","period":"Pre-COVID","jpycny":16.009196660571646,"jpykrw":9.731060239069752,"cn":528781,"kr":554627,"tw":413348,"us":141090,"tot":2578970,"sales":22.16,"shop":331000,"sps":66948.64048338369,"eurjpy":118.29444444444445,"jpyusd":110.32185194396088,"insample":true},{"m":"2017-05","period":"Pre-COVID","jpycny":16.300158640030432,"jpykrw":9.967200115077066,"cn":517038,"kr":558892,"tw":407471,"us":124672,"tot":2294717,"sales":19.35,"shop":297000,"sps":65151.51515151515,"eurjpy":124.09318181818183,"jpyusd":112.22535095472017,"insample":true},{"m":"2017-06","period":"Pre-COVID","jpycny":16.294236266009715,"jpykrw":9.799870067322578,"cn":587193,"kr":568877,"tw":433603,"us":137985,"tot":2346442,"sales":18.48,"shop":295000,"sps":62644.06779661017,"eurjpy":124.58454545454546,"jpyusd":110.94443185130015,"insample":true},{"m":"2017-07","period":"Pre-COVID","jpycny":16.607797807916302,"jpykrw":9.920417609624169,"cn":780771,"kr":644026,"tw":446604,"us":129369,"tot":2681518,"sales":22.76,"shop":357000,"sps":63753.50140056022,"eurjpy":129.4819047619048,"jpyusd":112.48396998353566,"insample":true},{"m":"2017-08","period":"Pre-COVID","jpycny":16.468255392158763,"jpykrw":9.708827600437019,"cn":819855,"kr":620904,"tw":377843,"us":91978,"tot":2477428,"sales":21.56,"shop":321000,"sps":67165.10903426791,"eurjpy":129.7034782608696,"jpyusd":109.85546206109262,"insample":true},{"m":"2017-09","period":"Pre-COVID","jpycny":16.857754481872316,"jpykrw":9.780151348053929,"cn":678313,"kr":556885,"tw":347796,"us":100174,"tot":2280406,"sales":23.2,"shop":330000,"sps":70303.0303030303,"eurjpy":131.92380952380952,"jpyusd":110.72476279545653,"insample":true},{"m":"2017-10","period":"Pre-COVID","jpycny":17.044868985503523,"jpykrw":9.974646661753546,"cn":663815,"kr":620936,"tw":421094,"us":125930,"tot":2595148,"sales":28.09,"shop":380000,"sps":73921.05263157895,"eurjpy":132.7631818181818,"jpyusd":112.93358440082127,"insample":true},{"m":"2017-11","period":"Pre-COVID","jpycny":17.033762010866074,"jpykrw":10.246630184889085,"cn":567149,"kr":622604,"tw":363178,"us":114910,"tot":2378079,"sales":25.32,"shop":353000,"sps":71728.04532577904,"eurjpy":132.39181818181817,"jpyusd":112.78907665856038,"insample":true},{"m":"2017-12","period":"Pre-COVID","jpycny":17.11705334800242,"jpykrw":10.41291939689359,"cn":564264,"kr":678905,"tw":319516,"us":116164,"tot":2521262,"sales":27.93,"shop":403000,"sps":69305.21091811414,"eurjpy":133.63842105263157,"jpyusd":112.90642453132223,"insample":true},{"m":"2018-01","period":"Pre-COVID","jpycny":17.252265388961586,"jpykrw":10.396776286573116,"cn":632304,"kr":803816,"tw":350522,"us":92014,"tot":2501409,"sales":28.49,"shop":417000,"sps":68321.34292565947,"eurjpy":135.25454545454545,"jpyusd":110.86892532853432,"insample":true},{"m":"2018-02","period":"Pre-COVID","jpycny":17.07399396806752,"jpykrw":10.010957805314574,"cn":716333,"kr":708318,"tw":400858,"us":81924,"tot":2509297,"sales":28.09,"shop":394000,"sps":71294.41624365482,"eurjpy":133.293,"jpyusd":107.94878439884029,"insample":true},{"m":"2018-03","period":"Pre-COVID","jpycny":16.780592716711897,"jpykrw":9.89851537217994,"cn":594920,"kr":619196,"tw":387338,"us":150964,"tot":2607956,"sales":29.03,"shop":421000,"sps":68954.86935866984,"eurjpy":130.85761904761904,"jpyusd":106.07619856403922,"insample":true},{"m":"2018-04","period":"Pre-COVID","jpycny":17.086367559076496,"jpykrw":10.065787594611319,"cn":683377,"kr":638523,"tw":470042,"us":147028,"tot":2900718,"sales":31.61,"shop":466000,"sps":67832.61802575107,"eurjpy":132.15749999999997,"jpyusd":107.6525500354341,"insample":true},{"m":"2018-05","period":"Pre-COVID","jpycny":17.209426157260403,"jpykrw":10.1834572004647,"cn":668600,"kr":640355,"tw":440109,"us":140463,"tot":2675052,"sales":28.77,"shop":459000,"sps":62679.7385620915,"eurjpy":129.57227272727275,"jpyusd":109.69334549330627,"insample":true},{"m":"2018-06","period":"Pre-COVID","jpycny":17.021041791607626,"jpykrw":10.057608108359881,"cn":760949,"kr":606162,"tw":456895,"us":161736,"tot":2704631,"sales":28.15,"shop":463000,"sps":60799.13606911447,"eurjpy":128.52904761904762,"jpyusd":110.05814617279118,"insample":true},{"m":"2018-07","period":"Pre-COVID","jpycny":16.589195492544125,"jpykrw":9.918481177072538,"cn":879097,"kr":607953,"tw":460473,"us":146716,"tot":2832040,"sales":27.22,"shop":457000,"sps":59562.363238512036,"eurjpy":130.23227272727274,"jpyusd":111.44558630186005,"insample":true},{"m":"2018-08","period":"Pre-COVID","jpycny":16.209062443653828,"jpykrw":9.8966869403848,"cn":860121,"kr":593941,"tw":394551,"us":103092,"tot":2578021,"sales":25.84,"shop":410000,"sps":63024.39024390244,"eurjpy":128.2004347826087,"jpyusd":111.00607621241899,"insample":true},{"m":"2018-09","period":"Pre-COVID","jpycny":16.331164769173032,"jpykrw":9.996075390785787,"cn":652740,"kr":479733,"tw":329142,"us":104637,"tot":2159595,"sales":24.65,"shop":406000,"sps":60714.28571428572,"eurjpy":130.53500000000003,"jpyusd":111.96359799977702,"insample":true},{"m":"2018-10","period":"Pre-COVID","jpycny":16.30793384225311,"jpykrw":9.969751440109022,"cn":715255,"kr":571176,"tw":379633,"us":143977,"tot":2640610,"sales":29.85,"shop":468000,"sps":63782.05128205128,"eurjpy":129.61652173913046,"jpyusd":112.86662401138823,"insample":true},{"m":"2018-11","period":"Pre-COVID","jpycny":16.327140965400876,"jpykrw":10.054649656665303,"cn":617252,"kr":588213,"tw":351905,"us":127006,"tot":2450751,"sales":27.7,"shop":433000,"sps":63972.286374133946,"eurjpy":128.78863636363633,"jpyusd":113.30182228247176,"insample":true},{"m":"2018-12","period":"Pre-COVID","jpycny":16.311459671821225,"jpykrw":10.005106158686234,"cn":599086,"kr":681566,"tw":335790,"us":126850,"tot":2631776,"sales":30.22,"shop":446000,"sps":67757.84753363229,"eurjpy":127.87789473684207,"jpyusd":112.32917244567729,"insample":true},{"m":"2019-01","period":"Pre-COVID","jpycny":16.043322383681208,"jpykrw":9.703108317578328,"cn":754421,"kr":779383,"tw":387498,"us":103191,"tot":2689339,"sales":26.27,"shop":420000,"sps":62547.619047619046,"eurjpy":124.34136363636365,"jpyusd":108.9146005948376,"insample":true},{"m":"2019-02","period":"Pre-COVID","jpycny":16.379682290645224,"jpykrw":9.831152621817264,"cn":723617,"kr":715804,"tw":399829,"us":92669,"tot":2604322,"sales":31.92,"shop":425000,"sps":75105.88235294117,"eurjpy":125.28,"jpyusd":110.36767199799141,"insample":true},{"m":"2019-03","period":"Pre-COVID","jpycny":16.564860389826404,"jpykrw":9.820805602639075,"cn":691279,"kr":585586,"tw":402433,"us":176564,"tot":2760136,"sales":33.28,"shop":452000,"sps":73628.3185840708,"eurjpy":125.67380952380951,"jpyusd":111.19139505881557,"insample":true},{"m":"2019-04","period":"Pre-COVID","jpycny":16.61640564716168,"jpykrw":9.766021430031238,"cn":726132,"kr":566624,"tw":403467,"us":170247,"tot":2926685,"sales":34.47,"shop":465000,"sps":74129.03225806452,"eurjpy":125.43599999999996,"jpyusd":111.61524258670165,"insample":true},{"m":"2019-05","period":"Pre-COVID","jpycny":16.02217275461764,"jpykrw":9.277688559486263,"cn":756365,"kr":603394,"tw":426537,"us":156962,"tot":2773091,"sales":30.99,"shop":474000,"sps":65379.74683544304,"eurjpy":122.94818181818178,"jpyusd":109.92640036413732,"insample":true},{"m":"2019-06","period":"Pre-COVID","jpycny":15.66402799189344,"jpykrw":9.211672547811578,"cn":880651,"kr":611867,"tw":461085,"us":175491,"tot":2880041,"sales":28.33,"shop":458000,"sps":61855.89519650655,"eurjpy":122.0805,"jpyusd":108.09897816423754,"insample":true},{"m":"2019-07","period":"Pre-COVID","jpycny":15.73611756060394,"jpykrw":9.195353470489925,"cn":1050420,"kr":561675,"tw":459216,"us":156865,"tot":2991189,"sales":28.13,"shop":441000,"sps":63786.84807256236,"eurjpy":121.40565217391304,"jpyusd":108.2201974242606,"insample":true},{"m":"2019-08","period":"Pre-COVID","jpycny":15.039238858125222,"jpykrw":8.772846199684032,"cn":1000639,"kr":308730,"tw":420279,"us":117828,"tot":2520134,"sales":25.66,"shop":381000,"sps":67349.0813648294,"eurjpy":118.17909090909089,"jpyusd":106.21667885463094,"insample":true},{"m":"2019-09","period":"Pre-COVID","jpycny":15.09677615479321,"jpykrw":8.99167563511848,"cn":819054,"kr":201252,"tw":376186,"us":127190,"tot":2272883,"sales":25.32,"shop":384000,"sps":65937.5,"eurjpy":118.24190476190478,"jpyusd":107.454496672177,"insample":true},{"m":"2019-10","period":"Pre-COVID","jpycny":15.234638911966696,"jpykrw":9.132417664016632,"cn":730631,"kr":197281,"tw":413701,"us":153363,"tot":2496568,"sales":25.64,"shop":396000,"sps":64747.47474747475,"eurjpy":119.51130434782611,"jpyusd":108.12992458960935,"insample":true},{"m":"2019-11","period":"Pre-COVID","jpycny":15.513174986310588,"jpykrw":9.31987267596949,"cn":750951,"kr":205042,"tw":392102,"us":148993,"tot":2441274,"sales":26.15,"shop":409000,"sps":63936.43031784841,"eurjpy":120.33761904761906,"jpyusd":108.89343732494508,"insample":true},{"m":"2019-12","period":"Pre-COVID","jpycny":15.548831122029233,"jpykrw":9.282023348031283,"cn":710234,"kr":247959,"tw":348269,"us":144498,"tot":2526387,"sales":29.92,"shop":437000,"sps":68466.81922196796,"eurjpy":121.24100000000001,"jpyusd":109.09393572652958,"insample":true},{"m":"2020-01","period":"COVID","jpycny":15.79578208046798,"jpykrw":9.363540974040003,"cn":924790,"kr":316812,"tw":461239,"us":117343,"tot":2661022,"sales":31.69,"shop":454000,"sps":69801.76211453744,"eurjpy":121.36272727272727,"jpyusd":109.33220860905459,"insample":false},{"m":"2020-02","period":"COVID","jpycny":15.730342232631166,"jpykrw":9.207368011654049,"cn":87220,"kr":143896,"tw":220420,"us":73373,"tot":1085147,"sales":11.02,"shop":134000,"sps":82238.80597014926,"eurjpy":120.02550000000001,"jpyusd":110.0646492434663,"insample":false},{"m":"2020-03","period":"COVID","jpycny":15.306956638267565,"jpykrw":8.820349787258724,"cn":10365,"kr":16669,"tw":7700,"us":22964,"tot":193658,"sales":4.75,"shop":30000,"sps":158333.33333333334,"eurjpy":118.89727272727272,"jpyusd":107.46892910700714,"insample":false},{"m":"2020-04","period":"COVID","jpycny":15.219074260807334,"jpykrw":8.802089565042676,"cn":163,"kr":299,"tw":337,"us":340,"tot":2917,"sales":0.5,"shop":2400,"sps":208333.33333333334,"eurjpy":116.96999999999998,"jpyusd":107.68834181865053,"insample":false},{"m":"2020-05","period":"COVID","jpycny":15.08309661199167,"jpykrw":8.71856485769396,"cn":25,"kr":18,"tw":8,"us":47,"tot":1663,"sales":0.77,"shop":3200,"sps":240625,"eurjpy":116.867,"jpyusd":107.19923682677707,"insample":false},{"m":"2020-06","period":"COVID","jpycny":15.190565448297406,"jpykrw":8.91410889018985,"cn":334,"kr":122,"tw":45,"us":136,"tot":2565,"sales":2.68,"shop":12000,"sps":223333.33333333334,"eurjpy":121.12045454545455,"jpyusd":107.61870913283873,"insample":false},{"m":"2020-07","period":"COVID","jpycny":15.23061414316534,"jpykrw":8.905824641868623,"cn":785,"kr":294,"tw":102,"us":403,"tot":3782,"sales":3.17,"shop":13000,"sps":243846.15384615384,"eurjpy":122.38043478260872,"jpyusd":106.75761782308902,"insample":false},{"m":"2020-08","period":"COVID","jpycny":15.301820311628427,"jpykrw":8.93548655255894,"cn":1606,"kr":749,"tw":448,"us":698,"tot":8658,"sales":3.55,"shop":11000,"sps":322727.2727272727,"eurjpy":125.40380952380953,"jpyusd":106.02198156125449,"insample":false},{"m":"2020-09","period":"COVID","jpycny":15.498141827663009,"jpykrw":8.965452454163442,"cn":2954,"kr":1426,"tw":767,"us":632,"tot":13684,"sales":2.12,"shop":5000,"sps":424000,"eurjpy":124.50136363636365,"jpyusd":105.57754796035972,"insample":false},{"m":"2020-10","period":"COVID","jpycny":15.63762586419576,"jpykrw":9.197212855365496,"cn":4502,"kr":2021,"tw":1258,"us":932,"tot":27386,"sales":2.1,"shop":5000,"sps":420000,"eurjpy":123.88909090909091,"jpyusd":105.2120407328202,"insample":false},{"m":"2020-11","period":"COVID","jpycny":15.816562484195932,"jpykrw":9.36679079703242,"cn":18147,"kr":2825,"tw":1177,"us":1091,"tot":56673,"sales":2.79,"shop":7000,"sps":398571.4285714286,"eurjpy":123.60952380952382,"jpyusd":104.41841381196801,"insample":false},{"m":"2020-12","period":"COVID","jpycny":15.863685549423408,"jpykrw":9.476502155145946,"cn":18365,"kr":2808,"tw":975,"us":1348,"tot":58673,"sales":3.44,"shop":9000,"sps":382222.22222222225,"eurjpy":126.2781818181818,"jpyusd":103.76418385412384,"insample":false},{"m":"2021-01","period":"COVID","jpycny":16.043165193490168,"jpykrw":9.435581767995012,"cn":10225,"kr":2535,"tw":592,"us":1206,"tot":46522,"sales":3.99,"shop":11000,"sps":362727.2727272727,"eurjpy":126.30800000000002,"jpyusd":103.77911156574929,"insample":false},{"m":"2021-02","period":"COVID","jpycny":16.316648631976495,"jpykrw":9.478576970015084,"cn":1747,"kr":910,"tw":423,"us":367,"tot":7355,"sales":4.33,"shop":10000,"sps":433000,"eurjpy":127.49250000000002,"jpyusd":105.38399226312005,"insample":false},{"m":"2021-03","period":"COVID","jpycny":16.701783020223427,"jpykrw":9.615185773499409,"cn":3951,"kr":1956,"tw":552,"us":550,"tot":12276,"sales":5.55,"shop":14000,"sps":396428.5714285714,"eurjpy":129.3804347826087,"jpyusd":108.73139700159676,"insample":false},{"m":"2021-04","period":"COVID","jpycny":16.718342015646094,"jpykrw":9.752807158042799,"cn":3271,"kr":1076,"tw":405,"us":583,"tot":10853,"sales":4.5,"shop":11000,"sps":409090.9090909091,"eurjpy":130.48899999999998,"jpyusd":108.93055404830072,"insample":false},{"m":"2021-05","period":"COVID","jpycny":16.972272636656985,"jpykrw":9.715773618408925,"cn":1823,"kr":950,"tw":327,"us":958,"tot":10035,"sales":2.51,"shop":5000,"sps":502000,"eurjpy":132.56904761904758,"jpyusd":109.14711601794056,"insample":false},{"m":"2021-06","period":"COVID","jpycny":17.13779766886623,"jpykrw":9.806599707269696,"cn":1973,"kr":835,"tw":300,"us":1162,"tot":9251,"sales":4.51,"shop":10000,"sps":451000,"eurjpy":132.63136363636363,"jpyusd":110.09410042409333,"insample":false},{"m":"2021-07","period":"COVID","jpycny":17.031011421196947,"jpykrw":9.623671773352676,"cn":3931,"kr":1808,"tw":549,"us":6139,"tot":51055,"sales":3.87,"shop":9000,"sps":430000,"eurjpy":130.3490909090909,"jpyusd":110.26145801291909,"insample":false},{"m":"2021-08","period":"COVID","jpycny":16.958282951865122,"jpykrw":9.459332271081163,"cn":2396,"kr":1647,"tw":387,"us":2981,"tot":25916,"sales":3.34,"shop":8000,"sps":417500,"eurjpy":129.28409090909088,"jpyusd":109.82508301799365,"insample":false},{"m":"2021-09","period":"COVID","jpycny":17.058435865510322,"jpykrw":9.391920835554462,"cn":3960,"kr":2224,"tw":390,"us":1657,"tot":17720,"sales":2.99,"shop":6000,"sps":498333.3333333333,"eurjpy":129.65636363636364,"jpyusd":110.15535997713819,"insample":false},{"m":"2021-10","period":"COVID","jpycny":17.612478930874094,"jpykrw":9.568958272415925,"cn":4009,"kr":1921,"tw":425,"us":2035,"tot":22113,"sales":3.14,"shop":6000,"sps":523333.3333333333,"eurjpy":131.21238095238093,"jpyusd":113.09972868805693,"insample":false},{"m":"2021-11","period":"COVID","jpycny":17.842166148506976,"jpykrw":9.625953107529863,"cn":3189,"kr":2021,"tw":390,"us":1432,"tot":20682,"sales":3.48,"shop":7000,"sps":497142.85714285716,"eurjpy":130.11772727272725,"jpyusd":113.9979052921241,"insample":false},{"m":"2021-12","period":"COVID","jpycny":17.890643495233814,"jpykrw":9.62278265801358,"cn":1764,"kr":1064,"tw":276,"us":956,"tot":12084,"sales":3.66,"shop":8000,"sps":457500,"eurjpy":128.7995652173913,"jpyusd":113.94377411178253,"insample":false},{"m":"2022-01","period":"COVID","jpycny":18.076347057600607,"jpykrw":9.604612989176742,"cn":1490,"kr":1264,"tw":492,"us":1785,"tot":17766,"sales":4.49,"shop":9000,"sps":498888.8888888889,"eurjpy":130.00904761904764,"jpyusd":114.90505210349995,"insample":false},{"m":"2022-02","period":"COVID","jpycny":18.15765592363185,"jpykrw":9.617466186884608,"cn":2359,"kr":913,"tw":601,"us":595,"tot":16719,"sales":4.17,"shop":6000,"sps":695000,"eurjpy":130.6565,"jpyusd":115.19807086996003,"insample":false},{"m":"2022-03","period":"COVID","jpycny":18.695404239494696,"jpykrw":9.713510644038049,"cn":9799,"kr":6694,"tw":2461,"us":3199,"tot":66121,"sales":4.7,"shop":9000,"sps":522222.22222222225,"eurjpy":130.7108695652174,"jpyusd":118.62363673669093,"insample":false},{"m":"2022-04","period":"COVID","jpycny":19.62594915364456,"jpykrw":10.212973583405965,"cn":22371,"kr":7699,"tw":2838,"us":5214,"tot":139548,"sales":6.6,"shop":13000,"sps":507692.3076923077,"eurjpy":136.6063157894737,"jpyusd":126.26826752807025,"insample":false},{"m":"2022-05","period":"COVID","jpycny":19.235051650923577,"jpykrw":10.166442294679284,"cn":17643,"kr":8805,"tw":1861,"us":8066,"tot":147046,"sales":6.2,"shop":15000,"sps":413333.3333333333,"eurjpy":136.24090909090913,"jpyusd":128.79038530123282,"insample":false},{"m":"2022-06","period":"COVID","jpycny":20.014150270474524,"jpykrw":10.475176987712686,"cn":14657,"kr":11168,"tw":2416,"us":9724,"tot":120430,"sales":6.6,"shop":18000,"sps":366666.6666666667,"eurjpy":141.5686363636364,"jpyusd":133.98738642621151,"insample":false},{"m":"2022-07","period":"COVID","jpycny":20.305952795338314,"jpykrw":10.44848793382237,"cn":14803,"kr":20384,"tw":3945,"us":14127,"tot":144578,"sales":10.2,"shop":29000,"sps":351724.1379310345,"eurjpy":139.17380952380955,"jpyusd":136.72768611086425,"insample":false},{"m":"2022-08","period":"COVID","jpycny":19.867401696864427,"jpykrw":10.229054171747086,"cn":12332,"kr":28515,"tw":5007,"us":15823,"tot":169902,"sales":9.22,"shop":27000,"sps":341481.48148148146,"eurjpy":136.85478260869567,"jpyusd":135.1193797917186,"insample":false},{"m":"2022-09","period":"COVID","jpycny":20.367258055023306,"jpykrw":10.245891527442177,"cn":17590,"kr":32764,"tw":6756,"us":17965,"tot":206641,"sales":9.17,"shop":28000,"sps":327500,"eurjpy":141.5681818181818,"jpyusd":142.94368996204383,"insample":false},{"m":"2022-10","period":"COVID","jpycny":20.473971259117945,"jpykrw":10.31168868181874,"cn":21498,"kr":122959,"tw":35028,"us":53242,"tot":498646,"sales":13.68,"shop":70000,"sps":195428.57142857142,"eurjpy":144.72523809523813,"jpyusd":147.2930468791649,"insample":false},{"m":"2022-11","period":"COVID","jpycny":19.833479110033245,"jpykrw":10.484377842564063,"cn":21016,"kr":315421,"tw":99533,"us":84289,"tot":934599,"sales":17.54,"shop":130000,"sps":134923.07692307694,"eurjpy":145.1240909090909,"jpyusd":142.26076960094107,"insample":false},{"m":"2022-12","period":"COVID","jpycny":19.337204294419987,"jpykrw":10.420485546048214,"cn":33567,"kr":456165,"tw":170159,"us":109484,"tot":1370114,"sales":21.45,"shop":190000,"sps":112894.73684210527,"eurjpy":142.82238095238094,"jpyusd":134.88048928563393,"insample":false},{"m":"2023-01","period":"Boom","jpycny":19.207097004235298,"jpykrw":10.477560453263935,"cn":31291,"kr":565251,"tw":259340,"us":88114,"tot":1497472,"sales":19.36,"shop":180000,"sps":107555.55555555556,"eurjpy":140.54409090909093,"jpyusd":130.50802387323887,"insample":false},{"m":"2023-02","period":"Boom","jpycny":19.43861919819126,"jpykrw":10.40179401486075,"cn":36285,"kr":568622,"tw":248493,"us":86946,"tot":1475455,"sales":17.3,"shop":160000,"sps":108125,"eurjpy":142.377,"jpyusd":132.8751014922866,"insample":true},{"m":"2023-03","period":"Boom","jpycny":19.376256585198607,"jpykrw":10.227784730913642,"cn":75814,"kr":466810,"tw":278902,"us":203041,"tot":1817616,"sales":19.9,"shop":190000,"sps":104736.84210526316,"eurjpy":143.01,"jpyusd":133.58147128341332,"insample":true},{"m":"2023-04","period":"Boom","jpycny":19.38972224142013,"jpykrw":10.089806624792873,"cn":108295,"kr":466987,"tw":291564,"us":183893,"tot":1949236,"sales":20.65,"shop":220000,"sps":93863.63636363637,"eurjpy":146.51111111111112,"jpyusd":133.58390023250044,"insample":true},{"m":"2023-05","period":"Boom","jpycny":19.608765519655993,"jpykrw":10.325449120290244,"cn":134510,"kr":515717,"tw":303343,"us":183408,"tot":1899176,"sales":21.7,"shop":240000,"sps":90416.66666666667,"eurjpy":148.92545454545458,"jpyusd":137.0374552983249,"insample":true},{"m":"2023-06","period":"Boom","jpycny":19.722248238076283,"jpykrw":10.889186440316431,"cn":208573,"kr":545089,"tw":388976,"us":226806,"tot":2073441,"sales":28,"shop":300000,"sps":93333.33333333333,"eurjpy":153.14863636363637,"jpyusd":141.28280714702046,"insample":true},{"m":"2023-07","period":"Boom","jpycny":19.619059487206528,"jpykrw":10.98798887068004,"cn":313328,"kr":626830,"tw":422356,"us":198845,"tot":2320694,"sales":31.3,"shop":320000,"sps":97812.5,"eurjpy":155.93714285714285,"jpyusd":141.0156704174041,"insample":true},{"m":"2023-08","period":"Boom","jpycny":19.970987310933797,"jpykrw":10.945002202177356,"cn":364228,"kr":569092,"tw":396346,"us":138362,"tot":2157190,"sales":31.79,"shop":310000,"sps":102548.3870967742,"eurjpy":157.96217391304347,"jpyusd":144.80159742371583,"insample":true},{"m":"2023-09","period":"Boom","jpycny":20.23880779331827,"jpykrw":11.076992401177197,"cn":325645,"kr":570369,"tw":385259,"us":156637,"tot":2184442,"sales":32.66,"shop":320000,"sps":102062.49999999999,"eurjpy":157.7952380952381,"jpyusd":147.69566767694778,"insample":true},{"m":"2023-10","period":"Boom","jpycny":20.47122024918762,"jpykrw":11.072269757500026,"cn":256371,"kr":631124,"tw":424857,"us":211867,"tot":2516623,"sales":38.38,"shop":360000,"sps":106611.11111111111,"eurjpy":158.0377272727273,"jpyusd":149.62087306778673,"insample":true},{"m":"2023-11","period":"Boom","jpycny":20.726040370890164,"jpykrw":11.45740618819703,"cn":258343,"kr":649877,"tw":403498,"us":184769,"tot":2440890,"sales":39.49,"shop":380000,"sps":103921.05263157895,"eurjpy":161.8440909090909,"jpyusd":149.74156892266416,"insample":true},{"m":"2023-12","period":"Boom","jpycny":20.189209630401148,"jpykrw":11.046990687663186,"cn":312474,"kr":782726,"tw":399500,"us":183166,"tot":2734115,"sales":47.74,"shop":438000,"sps":108995.43378995433,"eurjpy":157.21263157894737,"jpyusd":144.19139014665134,"insample":true},{"m":"2024-01","period":"Boom","jpycny":20.390751830795498,"jpykrw":11.018514010751288,"cn":416088,"kr":857039,"tw":492288,"us":131855,"tot":2688478,"sales":39.99,"shop":398000,"sps":100477.38693467337,"eurjpy":159.45818181818183,"jpyusd":146.22300583961686,"insample":true},{"m":"2024-02","period":"Boom","jpycny":20.782467008817882,"jpykrw":11.227217883402474,"cn":459463,"kr":818562,"tw":502237,"us":148719,"tot":2788224,"sales":46.99,"shop":419000,"sps":112147.97136038187,"eurjpy":161.37714285714284,"jpyusd":149.49644667363654,"insample":true},{"m":"2024-03","period":"Boom","jpycny":20.789137245535905,"jpykrw":11.240286523809887,"cn":452525,"kr":663102,"tw":484454,"us":290075,"tot":3081781,"sales":49.54,"shop":454000,"sps":109118.94273127754,"eurjpy":162.7725,"jpyusd":149.71440922720336,"insample":true},{"m":"2024-04","period":"Boom","jpycny":21.25082090755738,"jpykrw":11.230900352908009,"cn":533611,"kr":661259,"tw":459723,"us":228900,"tot":3043003,"sales":59.96,"shop":506000,"sps":118498.02371541502,"eurjpy":165.02952380952382,"jpyusd":153.8340664852652,"insample":true},{"m":"2024-05","period":"Boom","jpycny":21.550223505540995,"jpykrw":11.426521622961767,"cn":545552,"kr":738872,"tw":466008,"us":246972,"tot":3040294,"sales":71.87,"shop":566000,"sps":126978.79858657243,"eurjpy":168.53636363636363,"jpyusd":155.8757131025901,"insample":true},{"m":"2024-06","period":"Boom","jpycny":21.75672766967155,"jpykrw":11.432328054421257,"cn":665617,"kr":703277,"tw":574487,"us":296414,"tot":3140642,"sales":66.12,"shop":579000,"sps":114196.89119170986,"eurjpy":169.81300000000002,"jpyusd":157.8334417696812,"insample":true},{"m":"2024-07","period":"Boom","jpycny":21.736043439733447,"jpykrw":11.414319325392166,"cn":776520,"kr":757679,"tw":571698,"us":251218,"tot":3292602,"sales":63.32,"shop":571000,"sps":110893.16987740806,"eurjpy":171.1708695652174,"jpyusd":157.84719382231955,"insample":true},{"m":"2024-08","period":"Boom","jpycny":20.455205419744427,"jpykrw":10.819154240781005,"cn":746010,"kr":612172,"tw":564360,"us":174051,"tot":2933381,"sales":46.32,"shop":453000,"sps":102251.65562913907,"eurjpy":161.05545454545452,"jpyusd":146.25208446843993,"insample":true},{"m":"2024-09","period":"Boom","jpycny":20.236499358807002,"jpykrw":10.757982586024898,"cn":652405,"kr":656753,"tw":470635,"us":191942,"tot":2872487,"sales":39.71,"shop":450000,"sps":88244.44444444444,"eurjpy":159.08095238095243,"jpyusd":143.23874696646178,"insample":true},{"m":"2024-10","period":"Boom","jpycny":21.11877110945945,"jpykrw":10.992696877817885,"cn":582919,"kr":732167,"tw":478902,"us":278461,"tot":3312193,"sales":50.84,"shop":518000,"sps":98146.71814671815,"eurjpy":163.19695652173908,"jpyusd":149.66228070175433,"insample":true},{"m":"2024-11","period":"Boom","jpycny":21.305208228451527,"jpykrw":11.012601213859535,"cn":546339,"kr":749506,"tw":488362,"us":247464,"tot":3187175,"sales":51.48,"shop":518000,"sps":99382.23938223938,"eurjpy":163.23380952380953,"jpyusd":153.55749373972486,"insample":true},{"m":"2024-12","period":"Boom","jpycny":21.112317632032674,"jpykrw":10.690078411892886,"cn":604293,"kr":867377,"tw":491162,"us":238523,"tot":3489888,"sales":62.59,"shop":599000,"sps":104490.81803005008,"eurjpy":161.08350000000002,"jpyusd":153.72396516760114,"insample":true},{"m":"2025-01","period":"Bust","jpycny":21.429508157274174,"jpykrw":10.768938230521247,"cn":980520,"kr":967100,"tw":593431,"us":182556,"tot":3781629,"sales":61.93,"shop":591000,"sps":104788.49407783418,"eurjpy":161.92136363636365,"jpyusd":156.38944253716272,"insample":true},{"m":"2025-02","period":"Bust","jpycny":20.86980513972764,"jpykrw":10.503986992855241,"cn":722924,"kr":847358,"tw":507346,"us":191494,"tot":3258491,"sales":53.8,"shop":541000,"sps":99445.47134935304,"eurjpy":158.087,"jpyusd":151.8242496998799,"insample":true},{"m":"2025-03","period":"Bust","jpycny":20.569191368536462,"jpykrw":10.22338295653771,"cn":661817,"kr":691725,"tw":522886,"us":342752,"tot":3497755,"sales":44.22,"shop":515000,"sps":85864.07766990291,"eurjpy":161.16666666666666,"jpyusd":149.13436413548774,"insample":true},{"m":"2025-04","period":"Bust","jpycny":19.75198609656049,"jpykrw":9.995644269432079,"cn":765189,"kr":721672,"tw":537638,"us":327542,"tot":3909128,"sales":43.94,"shop":521000,"sps":84337.81190019194,"eurjpy":161.6705,"jpyusd":144.16909296010772,"insample":true},{"m":"2025-05","period":"Bust","jpycny":20.054989761859325,"jpykrw":10.416982756183014,"cn":790089,"kr":825883,"tw":538428,"us":311933,"tot":3693587,"sales":42.56,"shop":536000,"sps":79402.98507462686,"eurjpy":163.1442857142857,"jpyusd":144.65649660739996,"insample":true},{"m":"2025-06","period":"Bust","jpycny":20.135762760075686,"jpykrw":10.583889137908436,"cn":798001,"kr":729860,"tw":585070,"us":345150,"tot":3377985,"sales":39.26,"shop":500000,"sps":78520,"eurjpy":166.5233333333333,"jpyusd":144.59932186569628,"insample":true},{"m":"2025-07","period":"Bust","jpycny":20.48042476472186,"jpykrw":10.661102845126189,"cn":974564,"kr":678566,"tw":604177,"us":277080,"tot":3437118,"sales":40.34,"shop":476000,"sps":84747.89915966387,"eurjpy":171.5313043478261,"jpyusd":146.8983646599744,"insample":true},{"m":"2025-08","period":"Bust","jpycny":20.587978485112217,"jpykrw":10.622952016829089,"cn":1018747,"kr":660917,"tw":620753,"us":194525,"tot":3428406,"sales":44.17,"shop":494000,"sps":89412.95546558705,"eurjpy":171.7895238095238,"jpyusd":147.69426021452546,"insample":true},{"m":"2025-09","period":"Bust","jpycny":20.762838137665216,"jpykrw":10.61858964464532,"cn":775657,"kr":670563,"tw":526982,"us":224793,"tot":3267228,"sales":39.6,"shop":463000,"sps":85529.15766738661,"eurjpy":173.54863636363643,"jpyusd":147.92471397742818,"insample":true},{"m":"2025-10","period":"Bust","jpycny":21.271811231320594,"jpykrw":10.637757104751781,"cn":715804,"kr":867261,"tw":595915,"us":335744,"tot":3896524,"sales":54.67,"shop":564000,"sps":96932.62411347518,"eurjpy":176.1526086956522,"jpyusd":151.45831775700935,"insample":true},{"m":"2025-11","period":"Bust","jpycny":21.82810169064439,"jpykrw":10.6252423870828,"cn":562184,"kr":824567,"tw":542389,"us":302547,"tot":3517659,"sales":50.22,"shop":508000,"sps":98858.26771653544,"eurjpy":179.31599999999997,"jpyusd":155.11496340893754,"insample":true},{"m":"2025-12","period":"Bust","jpycny":22.12338141768501,"jpykrw":10.626135239755147,"cn":330435,"kr":974239,"tw":588409,"us":270704,"tot":3617791,"sales":51.93,"shop":500000,"sps":103860,"eurjpy":182.49714285714285,"jpyusd":155.8643745195886,"insample":true},{"m":"2026-01","period":"Bust","jpycny":22.484597796425483,"jpykrw":10.754239793841643,"cn":385519,"kr":1176089,"tw":694551,"us":207784,"tot":3597881,"sales":50.13,"shop":460000,"sps":108978.26086956522,"eurjpy":183.93857142857146,"jpyusd":156.70032413398621,"insample":true},{"m":"2026-02","period":"Bust","jpycny":22.459369624700823,"jpykrw":10.713200137235294,"cn":396511,"kr":1086381,"tw":693620,"us":219741,"tot":3466848,"sales":45.36,"shop":413000,"sps":109830.50847457627,"eurjpy":183.45150000000004,"jpyusd":155.15246596949413,"insample":true},{"m":"2026-03","period":"Bust","jpycny":23.010417130036757,"jpykrw":10.643341310339297,"cn":291686,"kr":795612,"tw":653346,"us":375948,"tot":3619159,"sales":46.51,"shop":453000,"sps":102671.08167770419,"eurjpy":183.3990909090909,"jpyusd":158.67281729411718,"insample":true},{"m":"2026-04","period":"Bust","jpycny":23.27438263002048,"jpykrw":10.738207815110396,"cn":330776,"kr":878579,"tw":643477,"us":330052,"tot":3692364,"sales":52.01,"shop":491000,"sps":105926.68024439919,"eurjpy":186.206,"jpyusd":159.06341830110023,"insample":true},{"m":"2026-05","period":"Bust","jpycny":23.277321090789485,"jpykrw":10.613826282952814,"cn":313123,"kr":951328,"tw":616804,"us":333696,"tot":3560256,"sales":49.66,"shop":503000,"sps":98727.63419483101,"eurjpy":184.7095,"jpyusd":158.2338176335538,"insample":true},{"m":"2026-06","period":"Bust","jpycny":23.719016110253985,"jpykrw":10.503978218839176,"cn":340803,"kr":787151,"tw":670445,"us":354496,"tot":3148754,"sales":50.95,"shop":498000,"sps":102309.23694779117,"eurjpy":185.11409090909092,"jpyusd":160.71721731992614,"insample":true},{"m":"2026-07","period":"Bust","jpycny":23.98058356087559,"jpykrw":10.900227945901932,"cn":428200,"kr":894700,"tw":763800,"us":286200,"tot":3442100,"sales":50.62,"shop":491000,"sps":103095.72301425663,"eurjpy":185.53913043478263,"jpyusd":162.50447445183212,"insample":true},{"m":"2026-08","period":"Bust","jpycny":23.57513127140725,"jpykrw":11.319546004851476,"cn":418000,"kr":850500,"tw":666000,"us":197400,"tot":3098900,"sales":46.19,"shop":447000,"sps":103333.33333333333,"eurjpy":184.10190476190473,"jpyusd":158.80306422131395,"insample":true},{"m":"2026-09","period":"Bust","jpycny":23.196364616628795,"jpykrw":11.531061732932844,"cn":null,"kr":null,"tw":null,"us":null,"tot":null,"sales":null,"shop":null,"sps":null,"eurjpy":180.70199999999997,"jpyusd":155.70778616482264,"insample":false}],"forecast":{"sps":{"slope":1.2357085303026134,"fc":[{"m":"2025-01","actual":104788.49407783418,"fcst":100976.39128356284,"nochange":104490.81803005008,"err":0.03705723667615519},{"m":"2025-02","actual":99445.47134935304,"fcst":108759.58544925263,"nochange":104788.49407783418,"err":-0.08953034084320896},{"m":"2025-03","actual":85864.07766990291,"fcst":93716.38202747586,"nochange":99445.47134935304,"err":-0.0875074550865145},{"m":"2025-04","actual":84337.81190019194,"fcst":82049.22901706453,"nochange":85864.07766990291,"err":0.02751088319462815},{"m":"2025-05","actual":79402.98507462686,"fcst":81085.03287739785,"nochange":84337.81190019194,"err":-0.020962429694840648},{"m":"2025-06","actual":78520,"fcst":77173.47604159637,"nochange":79402.98507462686,"err":0.017297546003522547},{"m":"2025-07","actual":84747.89915966387,"fcst":80326.0027525638,"nochange":78520.0,"err":0.05358756866073269},{"m":"2025-08","actual":89412.95546558705,"fcst":89802.9169479706,"nochange":84747.89915966387,"err":-0.004351870094774064},{"m":"2025-09","actual":85529.15766738661,"fcst":87943.91632445327,"nochange":89412.95546558705,"err":-0.027841953655809586},{"m":"2025-10","actual":96932.62411347518,"fcst":90912.26626025539,"nochange":85529.15766738661,"err":0.06412120595440898},{"m":"2025-11","actual":98858.26771653544,"fcst":98248.25822180924,"nochange":96932.62411347518,"err":0.006189662563164607},{"m":"2025-12","actual":103860,"fcst":105418.60346216001,"nochange":98858.26771653544,"err":-0.014895285552243488},{"m":"2026-01","actual":108978.26086956522,"fcst":100526.07480162743,"nochange":103860.0,"err":0.0807312761643444},{"m":"2026-02","actual":109830.50847457627,"fcst":116706.30858542895,"nochange":108978.26086956522,"err":-0.06072225053502752},{"m":"2026-03","actual":102671.08167770419,"fcst":108579.57310785881,"nochange":109830.50847457627,"err":-0.05595280014355605},{"m":"2026-04","actual":105926.68024439919,"fcst":104613.77468798633,"nochange":102671.08167770419,"err":0.012471926834344074},{"m":"2026-05","actual":98727.63419483101,"fcst":99958.8794840518,"nochange":105926.68024439919,"err":-0.012394007298165241},{"m":"2026-06","actual":102309.23694779117,"fcst":97723.89741686128,"nochange":98727.63419483101,"err":0.04585383251930215},{"m":"2026-07","actual":103095.72301425663,"fcst":103888.68133745459,"nochange":102309.23694779117,"err":-0.007662047824584608},{"m":"2026-08","actual":103333.33333333333,"fcst":106277.18208346085,"nochange":103095.72301425663,"err":-0.02809059764792775}]},"sales":{"slope":2.040595578361536,"fc":[{"m":"2025-01","actual":61.93,"fcst":63.30126345222678,"nochange":62.59,"err":-0.021900573751785793},{"m":"2025-02","actual":53.8,"fcst":60.788145105861986,"nochange":61.93,"err":-0.12212132098147746},{"m":"2025-03","actual":44.22,"fcst":52.17310594128335,"nochange":53.8,"err":-0.1653899748392527},{"m":"2025-04","actual":43.94,"fcst":46.75954969105384,"nochange":44.22,"err":-0.062193439384048865},{"m":"2025-05","actual":42.56,"fcst":41.48714765265896,"nochange":43.94,"err":0.02553116087882381},{"m":"2025-06","actual":39.26,"fcst":43.38784750571077,"nochange":42.56,"err":-0.09997320165838289},{"m":"2025-07","actual":40.34,"fcst":43.94493903822395,"nochange":39.26,"err":-0.08559393226063419},{"m":"2025-08","actual":44.17,"fcst":38.632887791830846,"nochange":40.34,"err":0.1339418965642718},{"m":"2025-09","actual":39.6,"fcst":42.63856786457816,"nochange":44.17,"err":-0.07393007436749421},{"m":"2025-10","actual":54.67,"fcst":48.25609443858057,"nochange":39.6,"err":0.12479298349041237},{"m":"2025-11","actual":50.22,"fcst":54.25611396301735,"nochange":54.67,"err":-0.07730233212010859},{"m":"2025-12","actual":51.93,"fcst":60.39819281503102,"nochange":50.22,"err":-0.15106252635597772},{"m":"2026-01","actual":50.13,"fcst":52.65783784746125,"nochange":51.93,"err":-0.04919546322329481},{"m":"2026-02","actual":45.36,"fcst":51.81730457911952,"nochange":50.13,"err":-0.1330934992925421},{"m":"2026-03","actual":46.51,"fcst":47.607657981332046,"nochange":45.36,"err":-0.02332628702201105},{"m":"2026-04","actual":52.01,"fcst":54.680693533853834,"nochange":46.51,"err":-0.05007468749168313},{"m":"2026-05","actual":49.66,"fcst":47.616833049714344,"nochange":52.01,"err":0.04201344585874067},{"m":"2026-06","actual":50.95,"fcst":52.17588304552249,"nochange":49.66,"err":-0.023775617837892955},{"m":"2026-07","actual":50.62,"fcst":56.33538944926374,"nochange":50.95,"err":-0.10697616957126616},{"m":"2026-08","actual":46.19,"fcst":46.32225487520538,"nochange":50.62,"err":-0.0028591880174562434}]}},"hermes":[{"q":"2022Q4","jp":0.157,"ap":0.247},{"q":"2023Q1","jp":0.261,"ap":0.225},{"q":"2023Q2","jp":0.259,"ap":0.337},{"q":"2023Q3","jp":0.241,"ap":0.102},{"q":"2023Q4","jp":0.262,"ap":0.123},{"q":"2024Q1","jp":0.252,"ap":0.139},{"q":"2024Q2","jp":0.195,"ap":0.055},{"q":"2024Q3","jp":0.228,"ap":0.01},{"q":"2024Q4","jp":0.224,"ap":0.089},{"q":"2025Q1","jp":0.172,"ap":0.012},{"q":"2025Q2","jp":0.147,"ap":0.052},{"q":"2025Q3","jp":0.138,"ap":0.062},{"q":"2025Q4","jp":0.112,"ap":0.08},{"q":"2026Q1","jp":0.096,"ap":0.022},{"q":"2026Q2","jp":0.123,"ap":0.025},{"q":"2026Q3","jp":0.096,"ap":0}],"roll":[["2016-12",0.5614306328016365],["2017-01",0.5614371945263597],["2017-02",0.5654919271161396],["2017-03",0.6089807874109047],["2017-04",0.5986039066496958],["2017-05",0.604561836287201],["2017-06",0.5961964808428948],["2017-07",0.617862064464813],["2017-08",0.597142856946027],["2017-09",0.6330598982155987],["2017-10",0.6360184468028279],["2017-11",0.6369017840980956],["2017-12",0.5553009922520273],["2018-01",0.5014114683986184],["2018-02",0.5243112851404321],["2018-03",0.49538208830378816],["2018-04",0.4887453653366127],["2018-05",0.4757774574749187],["2018-06",0.4231770303684795],["2018-07",0.3952253743588091],["2018-08",0.36044701568910376],["2018-09",0.36820817771956366],["2018-10",0.37135703195252345],["2018-11",0.3481423793903558],["2018-12",0.12564321898178357],["2019-01",0.176063831817294],["2019-02",0.30306246019468464],["2019-03",0.33498877872026644],["2019-04",0.3496176459976456],["2019-05",0.43729549073629115],["2019-06",0.4555076767223178],["2019-07",0.4652942805828143],["2019-08",0.3456835304546128],["2019-09",0.26642889227362515],["2019-10",0.19760712235280445],["2019-11",0.18638849969088894],["2019-12",0.2546283807640978],["2020-01",0.24107651650260858],["2020-02",0.23933559567714424],["2020-03",0.26414134850274895],["2020-04",0.30740175886947363],["2020-05",0.3314422409247983],["2020-06",0.33085948562092626],["2024-07",0.23035553058216604],["2024-08",0.45804587300032856],["2024-09",0.4805328466791659],["2024-10",0.5044131531478939],["2024-11",0.505537752871278],["2024-12",0.4991099326043432],["2025-01",0.5070392698910211],["2025-02",0.5751186863005362],["2025-03",0.6012859007479263],["2025-04",0.606909212266938],["2025-05",0.5989911938718048],["2025-06",0.6040641171770045],["2025-07",0.6322663531418957],["2025-08",0.6277289229258524],["2025-09",0.6192635846918367],["2025-10",0.6434058333287624],["2025-11",0.6536981527861311],["2025-12",0.6732928908824498],["2026-01",0.6906105817541308],["2026-02",0.6818063675844835],["2026-03",0.6687453652879669],["2026-04",0.6590672108745149],["2026-05",0.6881402595309106],["2026-06",0.7348108209412516],["2026-07",0.7347940493992133],["2026-08",0.6809332809175097]],"scatter":[["2015-02",-0.0021746163083309748,0.01403241188751081],["2015-03",0.01590383257940303,-0.04245145156768177],["2015-04",-6.491762166087774e-05,0.037556291940623085],["2015-05",0.01024345223377587,0.029930368821586985],["2015-06",0.023112277296236564,0.015237942690971796],["2015-07",-0.0031722204007603875,-0.04067686990869066],["2015-08",-0.023361008015803097,-0.03611946387922184],["2015-09",-0.02849185981406803,-0.009922227449163677],["2015-10",0.0015445565266626454,-0.02583769172640649],["2015-11",0.017859877067793573,-0.0006815560411757254],["2015-12",-0.020151958927795182,-0.01048955781164837],["2016-01",-0.047902153267300254,-0.06788143933410978],["2016-02",-0.025203339871450074,0.008461668881272151],["2016-03",-0.009468590591590205,-0.016322670959530917],["2016-04",-0.02584185103737712,0.009108898238509223],["2016-05",-0.014141914707790429,-0.10764995731097246],["2016-06",-0.041558985918959054,-0.03898338752424033],["2016-07",-0.025884086454742106,-0.04947364336552133],["2016-08",-0.023859728997443,0.014179581025455499],["2016-09",0.002652719596018561,0.054718371259400614],["2016-10",0.010552971509018079,0.0053431459886269725],["2016-11",0.025517126967968075,0.028943658098088004],["2016-12",0.05791353902479595,0.066917730862459],["2017-01",-0.00493965458779324,-0.004549300165853309],["2017-02",-0.015610861025186577,-0.026502473734645152],["2017-03",-0.0032615124755366277,0.044622176024540876],["2017-04",-0.022638668273604008,0.0034997108297222185],["2017-05",0.01801149188628876,0.03114645724604694],["2017-06",-0.0003633983145239872,-0.01085304458967988],["2017-07",0.019060890562497913,0.011969923855616349],["2017-08",-0.00843772035360107,0.028834244972322457],["2017-09",0.023376145398146256,0.07308624262339503],["2017-10",0.011038461596482646,-0.005797619797420266],["2017-11",-0.0006518439682575809,-0.02930647364326867],["2017-12",0.0048778631731473295,-0.08355732524673049],["2018-01",0.007868223374618523,0.025135044517182563],["2018-02",-0.010386976444761496,-0.006100939851473357],["2018-03",-0.017333462083462765,0.023443605475438646],["2018-04",0.0180579035704358,-0.020853167529614424],["2018-05",0.007176339310073242,-0.020648261523993294],["2018-06",-0.011006934983687235,-0.0020691407937530083],["2018-07",-0.025698721610697126,-0.026136887919506392],["2018-08",-0.023181113580046597,0.03320236242696535],["2018-09",0.007504735464672981,-0.00991753700664394],["2018-10",-0.001423503211246341,-0.006687580947404806],["2018-11",0.001177084806983849,0.0037875156796119995],["2018-12",-0.0009609048476399289,0.008294716719272427],["2019-01",-0.016575195999827198,-0.0405791765879255],["2019-02",0.02074896991944179,0.13427396627848015],["2019-03",0.011241925633687429,0.036940225403085544],["2019-04",0.003106891626179228,0.002333423543303113],["2019-05",-0.03641693924849248,-0.06723806176186137],["2019-06",-0.022606687265349763,-0.027011594166647127],["2019-07",0.004591679057563507,0.025154423577522973],["2019-08",-0.04529584246124243,0.03104668654590308],["2019-09",0.003818511940352989,0.006243301949896293],["2019-10",0.009090489596290795,-0.0741930078716625],["2019-11",0.018117951057042052,-0.011796011920085113],["2019-12",0.002295804801235554,0.01926432062810201],["2023-02",0.011981921237426215,-0.04341628964699085],["2023-03",-0.003213338463393554,0.0249723662395542],["2023-04",0.0006947151688507972,-0.11405200179261804],["2023-05",0.011233542338397962,0.020942227224718266],["2023-06",0.0057706640382580434,0.06014222452427332],["2023-07",-0.005245834135757911,0.04128987248417607],["2023-08",0.017779069355520902,0.023986825231217184],["2023-09",0.013321353280334491,0.0226758556274644],["2023-10",0.01141807029137707,-0.012378016600551343],["2023-11",0.012370889114535112,-0.024746862141498075],["2023-12",-0.02624261362698203,-0.0015211149583429298],["2024-01",0.009933171460980165,-0.041940357143378994],["2024-02",0.01902824253961011,0.06118973065962094],["2024-03",0.00032090350588600636,0.02942872576677885],["2024-04",0.02196492309053462,0.07801366264972816],["2024-05",0.013990662414647555,0.1274805124052127],["2024-06",0.009536839868722058,-0.07770253168764693],["2024-07",-0.0009511572139422385,-0.03494196377218342],["2024-08",-0.060734476786744436,-0.1044258680350623],["2024-09",-0.01074952097096099,-0.11990100408047409],["2024-10",0.04267439816017505,0.05037235770157292],["2024-11",0.008789289553415696,0.013319310816445945],["2024-12",-0.009094916411227139,0.0009301794382638451],["2025-01",0.014912213909408814,0.04227771053928009],["2025-02",-0.026465473906320043,-0.10103125418129069],["2025-03",-0.014508992497027792,-0.0900345206161931],["2025-04",-0.040540343546002534,-0.022379364839804593],["2025-05",0.015223940576444953,-0.0019376781655344594],["2025-06",0.0040194871654364184,0.017210932673229415],["2025-07",0.016972064536988914,0.07074239411936616],["2025-08",0.005237796348022605,0.030289079665899905],["2025-09",0.008457424017877588,-0.016983002923874627],["2025-10",0.024218019069556958,0.06917841325324559],["2025-11",0.025815428181290505,0.020480419151881642],["2025-12",0.013436823917210171,0.00016105036862450184],["2026-01",0.016195500468050062,0.08753751817480498],["2026-02",-0.0011226500828442764,-0.04090682029248396],["2026-03",0.02423914974936154,-0.010598455765992283],["2026-04",0.011406265695676971,0.02677254696015127],["2026-05",0.0001262450367244675,-0.012025606935203381],["2026-06",0.018797551115526365,0.0640285988734927],["2026-07",0.0109673906815681,0.002072750929220272],["2026-08",-0.017052087868832597,-0.020993447953479346]],"sa":[{"m":"2015-02","sps":0.01403241188751081,"sales":0.18830410968859385,"shop":0.17427169780108312,"us":-0.008487692475359715,"kr":-0.03418376479931794},{"m":"2015-03","sps":-0.04245145156768177,"sales":-0.08374755108897233,"shop":-0.04129609952129044,"us":-0.12981531964353665,"kr":0.031275925748022904},{"m":"2015-04","sps":0.037556291940623085,"sales":0.237895864100311,"shop":0.2003395721596879,"us":0.06010551313578107,"kr":0.09019543937416127},{"m":"2015-05","sps":0.029930368821586985,"sales":-0.12972282780280492,"shop":-0.15965319662439176,"us":-0.00900544211153937,"kr":-0.006943744043175763},{"m":"2015-06","sps":0.015237942690971796,"sales":0.02684053744856371,"shop":0.01160259475759199,"us":-0.022870509358261,"kr":-0.18002177198278158},{"m":"2015-07","sps":-0.04067686990869066,"sales":0.06516303732432085,"shop":0.10583990723301148,"us":0.08407138482668436,"kr":0.21530218681496754},{"m":"2015-08","sps":-0.03611946387922184,"sales":0.003656611578665203,"shop":0.039776075457886986,"us":0.08477836523322346,"kr":0.22750319806242547},{"m":"2015-09","sps":-0.009922227449163677,"sales":-0.15686133145920322,"shop":-0.14693910401003935,"us":-0.08610884137802796,"kr":-0.13609338748759134},{"m":"2015-10","sps":-0.02583769172640649,"sales":0.02767968402667556,"shop":0.05351737575308191,"us":-0.04949641182039008,"kr":0.08401009588570309},{"m":"2015-11","sps":-0.0006815560411757254,"sales":-0.05898174837896653,"shop":-0.05830019233779067,"us":0.022212479441270416,"kr":-0.028989718734092996},{"m":"2015-12","sps":-0.01048955781164837,"sales":-0.014196488690831982,"shop":-0.003706930879183834,"us":0.03249597758353282,"kr":-0.007524051512447505},{"m":"2016-01","sps":-0.06788143933410978,"sales":0.011332171805028969,"shop":0.0792136111391388,"us":0.065603364878426,"kr":0.051231469263101154},{"m":"2016-02","sps":0.008461668881272151,"sales":0.03702155550096144,"shop":0.028559886619689327,"us":-0.07593324811369995,"kr":0.025552108970150728},{"m":"2016-03","sps":-0.016322670959530917,"sales":-0.1353346418841951,"shop":-0.11901197092466415,"us":-0.06835890877793749,"kr":-0.05877927076860179},{"m":"2016-04","sps":0.009108898238509223,"sales":0.017737854038026163,"shop":0.008628955799516932,"us":0.03932691156625466,"kr":-0.09336966790671332},{"m":"2016-05","sps":-0.10764995731097246,"sales":-0.21337623993824642,"shop":-0.10572628262727396,"us":0.011200737985434153,"kr":-0.19930636018251635},{"m":"2016-06","sps":-0.03898338752424033,"sales":-0.02725598258197539,"shop":0.011727404942265061,"us":-0.012252563958580917,"kr":0.1859838662620028},{"m":"2016-07","sps":-0.04947364336552133,"sales":0.060473398688990425,"shop":0.10994704205451153,"us":0.05949844767759997,"kr":0.15490428775457005},{"m":"2016-08","sps":0.014179581025455499,"sales":-0.06707253193275084,"shop":-0.0812521129582065,"us":0.04755092220440632,"kr":0.12524165837498916},{"m":"2016-09","sps":0.054718371259400614,"sales":0.039945908981788875,"shop":-0.014772462277611736,"us":0.008871853636848684,"kr":0.05961011285801546},{"m":"2016-10","sps":0.0053431459886269725,"sales":-0.003629772257675523,"shop":-0.008972918246302614,"us":-0.07121700633543518,"kr":-0.07946906332435426},{"m":"2016-11","sps":0.028943658098088004,"sales":0.008904360332846473,"shop":-0.020039297765241507,"us":-0.037647516804146255,"kr":-0.050553253313258606},{"m":"2016-12","sps":0.066917730862459,"sales":0.13896848381166682,"shop":0.0720507529492078,"us":0.031216338220640967,"kr":-0.0050042594688210484},{"m":"2017-01","sps":-0.004549300165853309,"sales":0.1555857533255109,"shop":0.16013505349136414,"us":0.06001057678022004,"kr":0.07225718901564615},{"m":"2017-02","sps":-0.026502473734645152,"sales":-0.09325276691928049,"shop":-0.06675029318463557,"us":-0.1411884560724199,"kr":0.031464192239308415},{"m":"2017-03","sps":0.044622176024540876,"sales":-0.004431206293213051,"shop":-0.049053382317753795,"us":-0.03375400458956834,"kr":0.007466681989410973},{"m":"2017-04","sps":0.0034997108297222185,"sales":0.00128526558990949,"shop":-0.0022144452398128595,"us":0.13195659989814718,"kr":0.08996802623840328},{"m":"2017-05","sps":0.03114645724604694,"sales":-0.060363739863257965,"shop":-0.09151019710930489,"us":-0.09329158814096891,"kr":-0.034028289603218034},{"m":"2017-06","sps":-0.01085304458967988,"sales":-0.0400737868585739,"shop":-0.029220742268894043,"us":-0.023607342326166195,"kr":0.06403412130357415},{"m":"2017-07","sps":0.011969923855616349,"sales":0.15373628320005622,"shop":0.14176635934443982,"us":0.058560896450929725,"kr":0.0267787524429091},{"m":"2017-08","sps":0.028834244972322457,"sales":0.025761883519548348,"shop":-0.0030723614527739668,"us":-0.012168525072020708,"kr":0.06236437655346633},{"m":"2017-09","sps":0.07308624262339503,"sales":0.13002530147032393,"shop":0.05693905884692876,"us":0.007696664294322836,"kr":0.014471446504996072},{"m":"2017-10","sps":-0.005797619797420266,"sales":-0.00044364542296118636,"shop":0.0053539743744591695,"us":-0.05279373199159648,"kr":-0.01364590912599846},{"m":"2017-11","sps":-0.02930647364326867,"sales":-0.06168002081935265,"shop":-0.032373547176084067,"us":0.011809206088461977,"kr":0.0037956595891242627},{"m":"2017-12","sps":-0.08355732524673049,"sales":-0.045767529318254896,"shop":0.03778979592847566,"us":0.029857139745147206,"kr":-0.06513813995056833},{"m":"2018-01","sps":0.025135044517182563,"sales":0.05511670656938886,"shop":0.02998166205220637,"us":0.0018372782869088833,"kr":0.0060273020362990315},{"m":"2018-02","sps":-0.006100939851473357,"sales":-0.034276365732651755,"shop":-0.028175425881178294,"us":-0.07639138626103353,"kr":-0.0531021851216269},{"m":"2018-03","sps":0.023443605475438646,"sales":0.05409516787427319,"shop":0.030651562398834403,"us":0.0013620586588867223,"kr":0.0784696495968018},{"m":"2018-04","sps":-0.020853167529614424,"sales":-0.03327373337916527,"shop":-0.012420565849550966,"us":0.030741988330464088,"kr":-0.006561640870699995},{"m":"2018-05","sps":-0.020648261523993294,"sales":-0.01890764612403556,"shop":0.0017406153999577414,"us":-0.015258828030208095,"kr":-0.03882371289173765},{"m":"2018-06","sps":-0.0020691407937530083,"sales":-0.015856256574078416,"shop":-0.013787115780325467,"us":0.01595523007200833,"kr":-0.008549301390322499},{"m":"2018-07","sps":-0.026136887919506392,"sales":-0.08817461720691518,"shop":-0.06203772928740879,"us":0.025570462926527704,"kr":-0.09434580420581674},{"m":"2018-08","sps":0.03320236242696535,"sales":0.027898428427963452,"shop":-0.005303933999001989,"us":-0.023926108836510696,"kr":0.07560940538586287},{"m":"2018-09","sps":-0.00991753700664394,"sales":0.00956599041315389,"shop":0.019483527419797954,"us":-0.06278716750025787,"kr":-0.09026111699140166},{"m":"2018-10","sps":-0.006687580947404806,"sales":-0.00029706851693711567,"shop":0.006390512430467593,"us":0.037545091956151744,"kr":0.05195252344639005},{"m":"2018-11","sps":0.0037875156796119995,"sales":-0.03261340362449414,"shop":-0.036400919304106216,"us":-0.02203304532303886,"kr":0.030504727838495907},{"m":"2018-12","sps":0.008294716719272427,"sales":-0.05680276834806414,"shop":-0.06509748506733648,"us":0.017774323877554125,"kr":-0.004404698988281552},{"m":"2019-01","sps":-0.0405791765879255,"sales":-0.10481141513048764,"shop":-0.06423223854256221,"us":0.02847587854430811,"kr":-0.02875238971948821},{"m":"2019-02","sps":0.13427396627848015,"sales":0.17466831054517235,"shop":0.040394344266692125,"us":-0.06779027048091793,"kr":-0.01172113780012038},{"m":"2019-03","sps":0.036940225403085544,"sales":0.06290287432528671,"shop":0.02596264892220118,"us":0.03476206140671534,"kr":0.012147601475823527},{"m":"2019-04","sps":0.002333423543303113,"sales":-0.083284716994387,"shop":-0.08561814053769012,"us":0.020727248143210683,"kr":-0.07021458614826948},{"m":"2019-05","sps":-0.06723806176186137,"sales":-0.031192106189082927,"shop":0.03604595557277855,"us":-0.05082647798913978,"kr":0.021185712386082217},{"m":"2019-06","sps":-0.027011594166647127,"sales":-0.08381369155355287,"shop":-0.05680209738690585,"us":-0.013482015639483369,"kr":0.06027068721511613},{"m":"2019-07","sps":0.025154423577522973,"sales":-0.061663951185195506,"shop":-0.08681837476271845,"us":0.010834897210217034,"kr":-0.18288765130571694},{"m":"2019-08","sps":0.03104668654590308,"sales":-0.011976516577392793,"shop":-0.043023203123295856,"us":0.04279121418339027,"kr":-0.4995292883850869},{"m":"2019-09","sps":0.006243301949896293,"sales":0.043374006927341044,"shop":0.03713070497744469,"us":-0.0012064941412321117,"kr":-0.3046200826774266},{"m":"2019-10","sps":-0.0741930078716625,"sales":-0.17914597309035535,"shop":-0.10495296521869274,"us":-0.09448562616953798,"kr":-0.1424439165487733},{"m":"2019-11","sps":-0.011796011920085113,"sales":0.061834581479286777,"shop":0.07363059339937186,"us":0.07447785445137778,"kr":0.03969872183448325},{"m":"2019-12","sps":0.01926432062810201,"sales":-0.009196349404020115,"shop":-0.028460670032122132,"us":-0.011630291080471457,"kr":0.038339910286149165},{"m":"2023-02","sps":-0.04341628964699085,"sales":-0.13263943868368477,"shop":-0.08922314903669418,"us":0.02641317054507711,"kr":0.07932106645341905},{"m":"2023-03","sps":0.0249723662395542,"sales":0.1611922611806002,"shop":0.13621989494104608,"us":0.23823334188846734,"kr":0.015647365329984453},{"m":"2023-04","sps":-0.11405200179261804,"sales":-0.08142189389355803,"shop":0.032630107899060096,"us":-0.04189352107723173,"kr":-0.03691837792591735},{"m":"2023-05","sps":0.020942227224718266,"sales":0.12482964367940638,"shop":0.10388741645468813,"us":0.02777922055622649,"kr":0.05756801918032603},{"m":"2023-06","sps":0.06014222452427332,"sales":0.26082181603246885,"shop":0.20067959150819548,"us":0.08731580981408885,"kr":0.10171705027202209},{"m":"2023-07","sps":0.04128987248417607,"sales":0.056834327526367794,"shop":0.015544455042191714,"us":-0.008532305858339098,"kr":0.04243018393456352},{"m":"2023-08","sps":0.023986825231217184,"sales":0.09546042411348611,"shop":0.07147359888226892,"us":-0.033701344704356484,"kr":0.002293730635690064},{"m":"2023-09","sps":0.0226758556274644,"sales":0.08371208145846357,"shop":0.061036225830999075,"us":0.04639499576389894,"kr":0.12553058327145136},{"m":"2023-10","sps":-0.012378016600551343,"sales":-0.030319604829614266,"shop":-0.01794158822906297,"us":0.020416437839548107,"kr":-0.021296333843470974},{"m":"2023-11","sps":-0.024746862141498075,"sales":0.07065000773982824,"shop":0.09539686988132642,"us":-0.033466133254678745,"kr":0.030393751481073008},{"m":"2023-12","sps":-0.0015211149583429298,"sales":0.04584783361276115,"shop":0.04736894857110409,"us":0.010289816547477355,"kr":0.034290920963416405},{"m":"2024-01","sps":-0.041940357143378994,"sales":-0.1418752600352997,"shop":-0.09993490289192061,"us":-0.09379048688789413,"kr":-0.07216115255329943},{"m":"2024-02","sps":0.06118973065962094,"sales":0.1411685319170102,"shop":0.0799788012573893,"us":0.16011315028382317,"kr":0.02744077386278633},{"m":"2024-03","sps":0.02942872576677885,"sales":0.07402464190037594,"shop":0.04459591613359719,"us":0.058193539976668984,"kr":0.0023206149318279468},{"m":"2024-04","sps":0.07801366264972816,"sales":0.07247976760303043,"shop":-0.0055338950466977815,"us":-0.1796939419809764,"kr":-0.040080706155284},{"m":"2024-05","sps":0.1274805124052127,"sales":0.2564139607859886,"shop":0.1289334483807758,"us":0.10640985082388453,"kr":0.06929037903069893},{"m":"2024-06","sps":-0.07770253168764693,"sales":-0.07745809212384905,"shop":0.0002444395637979692,"us":0.05741611855304812,"kr":-0.0030477274974959195},{"m":"2024-07","sps":-0.03494196377218342,"sales":-0.0978492977845479,"shop":-0.06290733401236445,"us":-0.042398943781367784,"kr":-0.022787130184771007},{"m":"2024-08","sps":-0.1044258680350623,"sales":-0.2327006550111894,"shop":-0.12827478697612696,"us":-0.03802188531888134,"kr":-0.11431953041823759},{"m":"2024-09","sps":-0.11990100408047409,"sales":-0.09725801928272372,"shop":0.022642984797750194,"us":0.02018229171223475,"kr":0.1935838794266377},{"m":"2024-10","sps":0.05037235770157292,"sales":0.05537539331124408,"shop":0.005003035609671275,"us":0.09047351552912519,"kr":-0.013814537238098043},{"m":"2024-11","sps":0.013319310816445945,"sales":0.054648959427496646,"shop":0.04132964861105062,"us":-0.014626706934326161,"kr":0.02451868680280646},{"m":"2024-12","sps":0.0009301794382638451,"sales":0.05153782620931949,"shop":0.050607646771055684,"us":-0.01779600787693815,"kr":-0.005649271251049609},{"m":"2025-01","sps":0.04227771053928009,"sales":0.024664132030016758,"shop":-0.017613578509263296,"us":-0.03250924182103179,"kr":-0.05403369139630447},{"m":"2025-02","sps":-0.10103125418129069,"sales":-0.16086810612121807,"shop":-0.059836851939927306,"us":0.08755686616780602,"kr":-0.05880357238187561},{"m":"2025-03","sps":-0.0900345206161931,"sales":-0.17491726078455158,"shop":-0.08488274016835856,"us":-0.027736673866491146,"kr":0.01000613688380042},{"m":"2025-04","sps":-0.022379364839804593,"sales":-0.12476959004298914,"shop":-0.1023902252031845,"us":0.01176947883941426,"kr":0.005084788936932663},{"m":"2025-05","sps":-0.0019376781655344594,"sales":0.04332248061695907,"shop":0.04526015878249341,"us":-0.01840776206440698,"kr":0.09319364874466064},{"m":"2025-06","sps":0.017210932673229415,"sales":-0.07477908978139523,"shop":-0.09199002245462451,"us":-0.023875353352929327,"kr":-0.07727425046625197},{"m":"2025-07","sps":0.07074239411936616,"sales":-0.027441916166785,"shop":-0.09818431028615124,"us":-0.09663573807952204,"kr":-0.17016709046269113},{"m":"2025-08","sps":0.030289079665899905,"sales":0.17062903981925165,"shop":0.14033996015335182,"us":-0.024794740608845844,"kr":0.07257351060618115},{"m":"2025-09","sps":-0.016983002923874627,"sales":-0.052503938509144324,"shop":-0.035520935585269614,"us":0.06695669761221276,"kr":0.13777856509531905},{"m":"2025-10","sps":0.06917841325324559,"sales":0.13078098677962385,"shop":0.061602573526378435,"us":0.11955773099213501,"kr":0.13470714074860196},{"m":"2025-11","sps":0.020480419151881642,"sales":-0.04276273615664481,"shop":-0.06324315530852642,"us":-0.00072613766492019,"kr":-0.04936857549863129},{"m":"2025-12","sps":0.00016105036862450184,"sales":-0.11039100787257612,"shop":-0.11055205824120073,"us":-0.09220729701694287,"kr":0.015089589921602586},{"m":"2026-01","sps":0.08753751817480498,"sales":-1.208856415813725e-05,"shop":-0.08754960673896321,"us":-0.02962736978093708,"kr":0.025431273354045658},{"m":"2026-02","sps":-0.04090682029248396,"sales":-0.12012583019490267,"shop":-0.07921900990241856,"us":0.09570786640672466,"kr":-0.005967481422723617},{"m":"2026-03","sps":-0.010598455765992283,"sales":0.04621571477039599,"shop":0.05681417053638804,"us":-0.07288609505320431,"kr":-0.09855470518707021},{"m":"2026-04","sps":0.02677254696015127,"sales":-0.006648817021177686,"shop":-0.033421363981328805,"us":-0.07304027685506384,"kr":0.06189672445738697},{"m":"2026-05","sps":-0.012025606935203381,"sales":0.028996474835073616,"shop":0.041022081770277004,"us":0.041400288970717916,"kr":0.03786434737888003},{"m":"2026-06","sps":0.0640285988734927,"sales":0.03157454599239226,"shop":-0.03245405288110058,"us":-0.06459937380372448,"kr":-0.14311267371586325},{"m":"2026-07","sps":0.002072750929220272,"sales":-0.06107726439629181,"shop":-0.06315001532551175,"us":-0.09096910137272994,"kr":0.030772265211985617},{"m":"2026-08","sps":-0.020993447953479346,"sales":-0.011656683937581694,"shop":0.009336764015897503,"us":-0.04250789708040459,"kr":0.04826293918470962}]};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = {}; ['--indigo','--ochre','--teal','--grey','--ink','--ink2','--faint','--grid','--rule','--alert','--paper','--band','--slate','--drag'].forEach(k=>C[k.slice(2)]=css(k));
+Chart.defaults.font.family = '"IBM Plex Sans", system-ui, sans-serif';
+Chart.defaults.font.size = 12;
+Chart.defaults.color = C.ink2;
+Chart.defaults.plugins.legend.display = false;
+Object.assign(Chart.defaults.plugins.tooltip,{backgroundColor:C.paper,titleColor:C.ink,bodyColor:C.ink2,footerColor:C.faint,borderColor:C.rule,borderWidth:1,padding:10,cornerRadius:4,boxPadding:4});
+Chart.defaults.maintainAspectRatio = false;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const lab = m => { const [y,mo]=m.split('-'); return MON[+mo-1]+' '+y; };
+const scaleX = {grid:{display:false}, ticks:{maxRotation:0, autoSkipPadding:18}, border:{color:C.rule}};
+const scaleY = (extra={}) => Object.assign({grid:{color:C.grid}, border:{display:false}}, extra);
+const pct = (v,d=1) => (v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
+const fmt = (v,d=0) => v.toLocaleString('en-GB',{maximumFractionDigits:d,minimumFractionDigits:d});
+const marker = label => ({id:'marker', afterDraw(ch){
+  const idx = ch.data.labels.indexOf(label); if(idx<0) return;
+  const px = ch.scales.x.getPixelForValue(idx); const {top,bottom} = ch.chartArea; const c = ch.ctx;
+  c.save(); c.strokeStyle = C.alert; c.setLineDash([4,4]); c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(px,top); c.lineTo(px,bottom); c.stroke(); c.restore();
+}});
+const band = (from,to,col) => ({id:'band', beforeDatasetsDraw(ch){
+  const L=ch.data.labels, a=L.indexOf(from), b=L.indexOf(to); if(a<0||b<0) return;
+  const x=ch.scales.x, {top,bottom}=ch.chartArea, c=ch.ctx;
+  c.save(); c.fillStyle=col||C.band; c.fillRect(x.getPixelForValue(a),top,x.getPixelForValue(b)-x.getPixelForValue(a),bottom-top); c.restore();
+}});
+// value labels at the end of bars
+const endLabels = (fmtFn) => ({id:'endLabels', afterDatasetsDraw(ch){
+  const c=ch.ctx; c.save(); c.font='500 12px "IBM Plex Sans", system-ui, sans-serif'; c.fillStyle=C.ink;
+  ch.data.datasets.forEach((ds,di)=>ch.getDatasetMeta(di).data.forEach((el,i)=>{
+    let v=ds.data[i]; if(v==null) return; if(Math.abs(v)<0.005) v=0; const hz=ch.options.indexAxis==='y';
+    if(hz){ c.textAlign=v>=0?'left':'right'; c.textBaseline='middle'; c.fillText(fmtFn(v,i),el.x+(v>=0?6:-6),el.y); }
+    else { c.textAlign='center'; c.textBaseline='bottom'; c.fillText(fmtFn(v,i),el.x,el.y-4); }
+  })); c.restore();
+}});
+
+const M = D.monthly;
+const withSales = M.filter(m=>m.sales!=null);
+const avg = a => a.reduce((s,v)=>s+v,0)/a.length;
+const BASE = {pre: avg(M.filter(m=>m.period==='Pre-COVID').map(m=>m.jpycny)), boom: avg(M.filter(m=>m.period==='Boom').map(m=>m.jpycny))};
+const share = (m, base, e) => 1 - Math.pow(base/m.jpycny, e);
+const lastFx = M[M.length-1];
+const last12 = withSales.slice(-12);
+const total12 = last12.reduce((s,m)=>s+m.sales,0);
+const borrowed12 = last12.reduce((s,m)=>s+m.sales*share(m,BASE.pre,1.15),0);
+const fcS = D.forecast.sales.fc;
+const adv = fcS.filter(f=>f.m>='2025-11');
+const advMean = adv.reduce((s,f)=>s+f.err,0)/adv.length;
+const last3 = M.filter(m=>m.tot).slice(-3);
+const cn3 = last3.reduce((s,m)=>s+m.cn,0)/last3.reduce((s,m)=>s+m.tot,0);
+const preAdv = M.filter(m=>m.tot && m.m>='2025-01' && m.m<='2025-10');
+const cnPre = preAdv.reduce((s,m)=>s+m.cn,0)/preAdv.reduce((s,m)=>s+m.tot,0);
+
+// ---------- SUMMARY ----------
+document.getElementById('lede').textContent = 'Foreign shoppers spent ¥'+fmt(total12)+' billion tax-free in Japanese department stores over the past year. About ¥'+fmt(borrowed12)+' billion of it depends on the weak yen: demand a luxury house books as growth in Japan but would lose if the yen recovered, and much of it would go back to China, Korea and Europe. Since November 2025 a second force has appeared: Chinese visitors stopped coming for political reasons, while the yen kept weakening.';
+const qLab = q => q.replace(/(\d{4})Q(\d)/,'Q$2 $1');
+new Chart(document.getElementById('cHermes'),{type:'bar',
+  data:{labels:D.hermes.map(h=>qLab(h.q)),datasets:[
+    {label:'Japan',data:D.hermes.map(h=>h.jp*100),backgroundColor:C.indigo,borderRadius:2,categoryPercentage:.72,barPercentage:.88},
+    {label:'Asia-Pacific excl. Japan',data:D.hermes.map(h=>h.ap*100),backgroundColor:C.ochre,borderRadius:2,categoryPercentage:.72,barPercentage:.88}]},
+  options:{interaction:{mode:'index',intersect:false},scales:{x:Object.assign({},scaleX,{ticks:{maxRotation:0,autoSkipPadding:22}}),y:scaleY({ticks:{callback:v=>v+'%'}})},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw.toFixed(1)+'%'}}}}});
+
+const perNames=[['Pre-COVID','2015–2019'],['Boom','2023–2024'],['Bust','2025–2026']];
+const perVals=perNames.map(([p])=>avg(M.filter(m=>m.period===p&&m.sps).map(m=>m.sps))/1000);
+new Chart(document.getElementById('cPeriod'),{type:'bar',
+  data:{labels:perNames.map(p=>p[1]),datasets:[{data:perVals,backgroundColor:[C.grey,C.indigo,C.indigo],borderRadius:2,categoryPercentage:.6}]},
+  options:{layout:{padding:{top:22}},scales:{x:scaleX,y:scaleY({min:0,ticks:{callback:v=>'¥'+v+'k'}})},
+    plugins:{tooltip:{callbacks:{label:c=>'¥'+fmt(c.raw*1000)+' per shopper'}}}},
+  plugins:[endLabels((v,i)=>'¥'+Math.round(v)+'k'+(i?' ('+pct(v/perVals[0]-1,0)+')':''))]});
+
+// ---------- EVIDENCE ----------
+const byM = {}; M.forEach(m=>byM[m.m]=m);
+const prevM = m => { const [y,mo]=m.split('-').map(Number); return mo===1?(y-1)+'-12':y+'-'+String(mo-1).padStart(2,'0'); };
+const CUR = {cny:{lab:'yuan',unit:'Yen per yuan',f:m=>m.jpycny,u:v=>'¥'+v.toFixed(1)},
+             krw:{lab:'Korean won',unit:'Yen per 100 Korean won',f:m=>m.jpykrw,u:v=>'¥'+v.toFixed(2)},
+             usd:{lab:'US dollar',unit:'Yen per US dollar',f:m=>m.jpyusd,u:v=>'¥'+v.toFixed(0)}};
+const dlog = (m,f) => { const a=byM[m], b=byM[prevM(m)]; if(!a||!b) return null; const x=f(a), y=f(b); return x&&y?Math.log(x/y):null; };
+const PER_COL = {'Pre-COVID':C.indigo,'Boom':C.ochre,'Bust':C.teal};
+const PER_LAB = {'Pre-COVID':'2015–2019','Boom':'2023–2024','Bust':'2025–2026'};
+const periodOf = m => (byM[m]||{}).period;
+function segInit(id, cb){
+  const el=document.getElementById(id), bs=[...el.querySelectorAll('button')];
+  const set=v=>{bs.forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));cb(v);};
+  bs.forEach(b=>b.addEventListener('click',()=>set(b.dataset.v)));
+  return set;
+}
+function corr(pts){
+  const n=pts.length, mx=avg(pts.map(p=>p.x)), my=avg(pts.map(p=>p.y));
+  let sxy=0,sxx=0,syy=0; pts.forEach(p=>{sxy+=(p.x-mx)*(p.y-my);sxx+=(p.x-mx)**2;syy+=(p.y-my)**2;});
+  let r=sxy/Math.sqrt(sxx*syy); if(Math.abs(r)<0.005) r=0; const b=sxy/sxx, t=r*Math.sqrt((n-2)/(1-r*r));
+  return {n,r,b,a:my-b*mx,p:2*(1-normCdf(Math.abs(t)))};
+}
+function normCdf(z){ const t=1/(1+0.2316419*z), d=0.3989423*Math.exp(-z*z/2);
+  return 1-d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); }
+
+// Exhibit 3: exchange rate with currency and period switches
+let fxChart, fxCur='cny', fxRange='all';
+function drawFx(){
+  const c=CUR[fxCur];
+  const rows=M.filter(m=>c.f(m) && (fxRange==='all' || (fxRange==='pre'?m.m<='2019-12':m.m>='2023-01')));
+  const pre=avg(M.filter(m=>m.period==='Pre-COVID'&&c.f(m)).map(c.f)), boom=avg(M.filter(m=>m.period==='Boom'&&c.f(m)).map(c.f));
+  const lastV=c.f(M.filter(m=>c.f(m)).slice(-1)[0]), ch=lastV/pre-1;
+  document.getElementById('fxTitle').textContent = 'A '+c.lab+' buys '+Math.round(Math.abs(ch)*100)+'% '+(ch>=0?'more':'less')+' yen than it did before COVID';
+  document.getElementById('fxUnits').textContent = c.unit+', monthly average';
+  const data={labels:rows.map(m=>lab(m.m)),datasets:[{data:rows.map(c.f),borderColor:C.indigo,borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.2}]};
+  const lines=[['Jan 2015','Dec 2019',pre,'2015–19 average '+c.u(pre)],['Jan 2023','Dec 2024',boom,'2023–24 average '+c.u(boom)]];
+  const opts={interaction:{mode:'index',intersect:false},scales:{x:scaleX,y:scaleY({ticks:{callback:v=>'¥'+v}})},
+    plugins:{tooltip:{callbacks:{label:t=>c.u(t.raw)+' per '+(fxCur==='krw'?'100 won':c.lab)}}}};
+  const avgPlugin={id:'avgLines',afterDatasetsDraw(chh){
+    const g=chh.ctx,x=chh.scales.x,y=chh.scales.y,L=chh.data.labels;
+    lines.forEach(([a,b,v,t])=>{ let i0=L.indexOf(a), i1=L.indexOf(b); if(i0<0&&i1<0) return; if(i0<0) i0=0; if(i1<0) i1=L.length-1;
+      const x0=x.getPixelForValue(i0),x1=x.getPixelForValue(i1),py=y.getPixelForValue(v);
+      g.save();g.strokeStyle=C.ink;g.globalAlpha=.55;g.setLineDash([2,3]);g.beginPath();g.moveTo(x0,py);g.lineTo(x1,py);g.stroke();
+      g.globalAlpha=1;g.setLineDash([]);g.fillStyle=C.ink2;g.font='12px "IBM Plex Sans", sans-serif';g.textAlign='left';g.fillText(t,x0+4,py-6);g.restore();});
+  }};
+  if(fxChart) fxChart.destroy();
+  fxChart=new Chart(document.getElementById('cFx'),{type:'line',data,options:opts,plugins:[band('Jan 2020','Dec 2022'),marker('Nov 2025'),avgPlugin]});
+}
+segInit('fxCur',v=>{fxCur=v;drawFx();})('cny');
+segInit('fxRange',v=>{fxRange=v;drawFx();})('all');
+
+// Exhibit 4: correlation explorer
+const OUT={sps:'spending per shopper',sales:'total duty-free sales',shop:'the number of shoppers',kr:'Korean arrivals',us:'US arrivals'};
+let scatChart;
+function explorerPoints(){
+  const cur=document.getElementById('expCur').value, out=document.getElementById('expOut').value;
+  return D.sa.map(o=>({m:o.m,x:dlog(o.m,CUR[cur].f),y:o[out]})).filter(p=>p.x!=null&&p.y!=null).map(p=>({x:p.x*100,y:p.y*100,m:p.m}));
+}
+function drawExplorer(){
+  const cur=document.getElementById('expCur').value, out=document.getElementById('expOut').value, byPer=document.getElementById('expPer').checked;
+  const pts=explorerPoints(), s=corr(pts);
+  const sig=s.p<0.05, moves=sig&&s.r>0.2;
+  const placebo = (cur==='usd'&&out==='us');
+  document.getElementById('expTitle').textContent = placebo
+    ? 'Placebo test: US visitor numbers do not follow the dollar (r = '+s.r.toFixed(2)+')'
+    : 'When the yen weakens against the '+CUR[cur].lab+', '+OUT[out]+' '+(moves?'rises':'barely moves')+' (r = '+s.r.toFixed(2)+')';
+  const xs=pts.map(p=>p.x), x0=Math.min(...xs), x1=Math.max(...xs);
+  const groups = byPer ? ['Pre-COVID','Boom','Bust'].map(per=>({label:PER_LAB[per],data:pts.filter(p=>periodOf(p.m)===per),backgroundColor:PER_COL[per]+'c0'}))
+                       : [{label:'Month',data:pts,backgroundColor:C.indigo+'b3'}];
+  const ds=groups.map(g=>Object.assign(g,{borderColor:C.paper,borderWidth:1,pointRadius:4.5,pointHoverRadius:7}));
+  ds.push({type:'line',label:'Fit',data:[{x:x0,y:s.a+s.b*x0},{x:x1,y:s.a+s.b*x1}],borderColor:C.ink,borderWidth:2,pointRadius:0});
+  const opts={animation:{duration:300},scales:{x:Object.assign({},scaleY(),{type:'linear',title:{display:true,text:'Change in yen per '+(cur==='krw'?'won':CUR[cur].lab)+', %',color:C.ink2},ticks:{callback:v=>v+'%'}}),
+      y:scaleY({title:{display:true,text:'Change in '+OUT[out].replace('the ','')+', %',color:C.ink2},ticks:{callback:v=>v+'%'}})},
+    plugins:{tooltip:{filter:t=>t.dataset.label!=='Fit',callbacks:{label:t=>lab(t.raw.m)+': yen '+(t.raw.x>0?'+':'')+t.raw.x.toFixed(1)+'%, outcome '+(t.raw.y>0?'+':'')+t.raw.y.toFixed(1)+'%'}}}};
+  if(scatChart) scatChart.destroy();
+  scatChart=new Chart(document.getElementById('cScatter'),{type:'scatter',data:{datasets:ds},options:opts});
+  document.getElementById('expKey').innerHTML = (byPer?['Pre-COVID','Boom','Bust'].map(p=>'<span><i style="background:'+PER_COL[p]+';border-radius:50%"></i>'+PER_LAB[p]+'</span>').join(''):'<span><i style="background:var(--indigo);border-radius:50%"></i>Month</span>')+'<span><i class="ln" style="background:var(--ink)"></i>Fitted line</span>';
+  const perStats = byPer ? ['Pre-COVID','Boom','Bust'].map(per=>{const q=pts.filter(p=>periodOf(p.m)===per); return q.length>5?'<dt>r, '+PER_LAB[per]+'</dt><dd>'+corr(q).r.toFixed(2)+' <small>n = '+q.length+'</small></dd>':'';}).join('') : '';
+  document.getElementById('expStats').innerHTML =
+    '<dt>Correlation</dt><dd>'+s.r.toFixed(2)+'</dd>'+
+    '<dt>Effect of a 1% weaker yen</dt><dd>'+(s.b>=0?'+':'−')+Math.abs(s.b).toFixed(2)+'%</dd>'+
+    '<dt>Months</dt><dd>'+s.n+'</dd>'+
+    '<dt>p-value</dt><dd class="'+(sig?'':'muted')+'">'+(s.p<0.001?'< 0.001':s.p.toFixed(3))+(sig?'':' <small>not significant</small>')+'</dd>'+perStats;
+  document.getElementById('expNote').textContent='p-value from a t-test on the correlation, normal approximation. The yuan and the dollar moved together (r = 0.87 in year-on-year terms), so these data cannot say which currency drives spending.';
+  drawRoll();
+}
+['expCur','expOut','expPer'].forEach(id=>document.getElementById(id).addEventListener('change',drawExplorer));
+document.querySelectorAll('.presets button').forEach(b=>b.addEventListener('click',()=>{const [c,o]=b.dataset.p.split(',');document.getElementById('expCur').value=c;document.getElementById('expOut').value=o;drawExplorer();}));
+
+// Exhibit 6: rolling correlation with adjustable window
+let rollChart;
+function drawRoll(){
+  const N=+document.getElementById('rollN').value; document.getElementById('rollNLab').textContent=N+' months';
+  const pts=explorerPoints(); const byMonth={}; pts.forEach(p=>byMonth[p.m]=p);
+  const months=M.filter(m=>m.m>='2015-02'&&m.m<='2026-08').map(m=>m.m);
+  const out=[];
+  for(let i=N-1;i<months.length;i++){
+    const w=months.slice(i-N+1,i+1).map(m=>byMonth[m]).filter(Boolean);
+    if(w.length>=Math.ceil(0.75*N)) out.push([months[i],corr(w).r]);
+  }
+  const pos=out.filter(o=>o[1]>0).length;
+  const cur=document.getElementById('expCur').value, o=document.getElementById('expOut').value;
+  document.getElementById('rollTitle').textContent = pos===out.length ? 'The link is positive in every '+N+'-month window' : 'The link is positive in '+pos+' of '+out.length+' '+N+'-month windows';
+  document.getElementById('rollUnits').textContent = 'Correlation between the yen per '+(cur==='krw'?'won':CUR[cur].lab)+' and '+OUT[o].replace('the ','')+' over the '+N+' months to each date';
+  const data={labels:out.map(r=>lab(r[0])),datasets:[{data:out.map(r=>r[1]),borderColor:C.indigo,borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.2,fill:{target:'origin',above:C.indigo+'1f',below:C.alert+'22'}}]};
+  const opts={animation:{duration:250},interaction:{mode:'index',intersect:false},scales:{x:scaleX,y:scaleY({min:-0.6,max:1,ticks:{callback:v=>v.toFixed(1)}})},
+    plugins:{tooltip:{callbacks:{label:t=>'r = '+t.raw.toFixed(2)}}}};
+  if(rollChart){rollChart.data=data;rollChart.options=opts;rollChart.update();}
+  else rollChart=new Chart(document.getElementById('cRoll'),{type:'line',data,options:opts});
+}
+document.getElementById('rollN').addEventListener('input',drawRoll);
+drawExplorer();
+
+const models=[['No change',0.0599],['Seasonal average',0.0597],['Gradient boosting',0.0492],['Random forest',0.0483],['Regression, all variables',0.0501],['Regression, season + yen',0.0465]];
+models.sort((a,b)=>b[1]-a[1]);
+new Chart(document.getElementById('cModels'),{type:'bar',
+  data:{labels:models.map(m=>m[0]),datasets:[{data:models.map(m=>m[1]),backgroundColor:models.map(m=>m[0]==='Regression, season + yen'?C.indigo:C.grey),borderRadius:2,barPercentage:.7}]},
+  options:{indexAxis:'y',layout:{padding:{right:52}},scales:{x:scaleY({min:0,max:0.07,ticks:{callback:v=>v.toFixed(2)}}),y:{grid:{display:false},border:{color:C.rule},ticks:{color:C.ink}}},
+    plugins:{tooltip:{callbacks:{label:c=>'RMSE '+c.raw.toFixed(4)}}}},
+  plugins:[endLabels((v,i)=>v.toFixed(3)+(models[i][0]==='Regression, season + yen'?'  (−22%)':''))]});
+
+const annual={}; withSales.forEach(m=>{const y=m.m.slice(0,4);annual[y]=(annual[y]||0)+m.sales;});
+const years=Object.keys(annual).sort();
+new Chart(document.getElementById('cAnnual'),{type:'bar',
+  data:{labels:years.map(y=>y==='2026'?'2026*':y),datasets:[{data:years.map(y=>annual[y]),backgroundColor:years.map(y=>y>='2020'&&y<='2022'?C.grey:(y==='2024'?C.indigo:C.indigo+'99')),borderRadius:2,categoryPercentage:.65}]},
+  options:{layout:{padding:{top:22}},scales:{x:scaleX,y:scaleY({min:0,ticks:{callback:v=>'¥'+v}})},
+    plugins:{tooltip:{callbacks:{label:c=>'¥'+c.raw.toFixed(0)+' bn'}}}},
+  plugins:[endLabels(v=>'¥'+Math.round(v))]});
+
+// ---------- LEDGER ----------
+let ledgerChart;
+function drawLedger(){
+  const baseKey = document.getElementById('baseSel').value, base = BASE[baseKey];
+  const e = parseFloat(document.getElementById('elas').value)||0;
+  const split = document.getElementById('splitOrigin').checked;
+  const rows = withSales.filter(m=>m.m>='2023-01');
+  const cur = rows.map(m=>m.sales*share(m,base,e));
+  const r12=rows.slice(-12), sh=r12.reduce((s,m,i)=>s+cur[rows.length-12+i],0)/r12.reduce((s,m)=>s+m.sales,0);
+  document.getElementById('ledgerTitle').textContent = sh>=0
+    ? 'Over the last 12 months, '+Math.round(sh*100)+'% of duty-free sales in Japan was borrowed'+(baseKey==='pre'?' (range '+Math.round(RNG.lo*100)+'–'+Math.round(RNG.hi*100)+'%)':'')+': it depended on the yen being weaker than '+(baseKey==='pre'?'before COVID':'in the boom')
+    : 'Against this baseline the yen is stronger, so currency effects reduced sales by '+Math.round(-sh*100)+'%';
+  const pos = cur.map(v=>Math.max(v,0));
+  const ds = [{label:'Local and other demand',data:rows.map((m,i)=>m.sales-pos[i]),backgroundColor:C.grey,stack:'a'}];
+  if(split) ORIG.forEach(o=>ds.push({label:'Borrowed from '+o[1],data:rows.map((m,i)=>m.tot?pos[i]*originShares(m)[o[0]]:0),backgroundColor:o[2],stack:'a'}));
+  else ds.push({label:'Borrowed demand',data:pos,backgroundColor:C.indigo,stack:'a'});
+  ds.push({label:'Lost to a stronger yen',data:cur.map(v=>Math.min(v,0)),backgroundColor:C.drag,stack:'a'});
+  const opts = {interaction:{mode:'index',intersect:false},
+    scales:{x:Object.assign({},scaleX,{stacked:true}),y:scaleY({stacked:true,ticks:{callback:v=>'¥'+v}})},
+    plugins:{tooltip:{filter:c=>Math.abs(c.raw)>0.05,itemSort:(a,b)=>b.datasetIndex-a.datasetIndex,callbacks:{label:c=>c.dataset.label+': ¥'+Math.abs(c.raw).toFixed(1)+' bn',
+      footer:it=>{const i=it[0].dataIndex;return 'Total ¥'+rows[i].sales.toFixed(1)+' bn, '+Math.round(cur[i]/rows[i].sales*100)+'% borrowed\n'+rows[i].jpycny.toFixed(1)+' yen per yuan';}}}}};
+  document.getElementById('ledgerKey').innerHTML = '<span><i style="background:var(--grey)"></i>Local and other demand</span>'+
+    (split?ORIG.map(o=>'<span><i style="background:'+o[2]+'"></i>Borrowed from '+o[1]+'</span>').join(''):'<span><i style="background:var(--indigo)"></i>Borrowed demand</span>')+
+    (cur.some(v=>v<0)?'<span><i style="background:var(--drag)"></i>Lost to a stronger yen</span>':'');
+  if(ledgerChart) ledgerChart.destroy();
+  ledgerChart=new Chart(document.getElementById('cLedger'),{type:'bar',data:{labels:rows.map(m=>lab(m.m)),datasets:ds},options:opts});
+}
+['baseSel','splitOrigin'].forEach(id=>document.getElementById(id).addEventListener('change',drawLedger)); document.getElementById('elas').oninput=drawLedger;
+
+const mixRows = M.filter(m=>m.tot && m.m>='2023-01');
+new Chart(document.getElementById('cMix'),{type:'line',
+  data:{labels:mixRows.map(m=>lab(m.m)),datasets:[
+    {label:'China',data:mixRows.map(m=>m.cn/m.tot*100),borderColor:C.indigo},
+    {label:'South Korea',data:mixRows.map(m=>m.kr/m.tot*100),borderColor:C.ochre},
+    {label:'Taiwan',data:mixRows.map(m=>m.tw/m.tot*100),borderColor:C.teal}]},
+  options:{elements:{line:{borderWidth:2,tension:.2},point:{radius:0,hoverRadius:5}},interaction:{mode:'index',intersect:false},
+    scales:{x:scaleX,y:scaleY({min:0,ticks:{callback:v=>v+'%'}})},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw.toFixed(1)+'%'}}}},
+  plugins:[marker('Nov 2025')]});
+
+// ---------- SCENARIO ----------
+const SCEN_RANGE = (()=>{ const v=[]; M.forEach(m=>{ if(m.period==='COVID'||!m.jpycny) return; const y=+m.m.slice(0,4), p=M.find(x=>x.m===(y-1)+m.m.slice(4)); if(!p||p.period==='COVID'||!p.jpycny) return; v.push((p.jpycny/m.jpycny-1)*100); }); return [Math.round(Math.min(...v)), Math.round(Math.max(...v))]; })();
+let scenChart;
+function drawScen(){
+  const s = parseInt(document.getElementById('fx').value)/100;
+  const r = 1/(1+s);
+  const dSps = Math.pow(r,1.15)-1, dSales = Math.pow(r,1.75)-1;
+  document.getElementById('fxLabel').textContent = s===0 ? 'Yen unchanged' : 'Yen '+Math.abs(s*100)+'% '+(s>0?'stronger':'weaker')+' against the yuan';
+  const set=(id,v)=>{const el=document.getElementById(id);el.textContent=pct(v);el.className=v<0?'neg':v>0?'pos':'';};
+  set('dSps',dSps); set('dSales',dSales);
+  const delta = total12*dSales, eurM = Math.abs(delta)/lastFx.eurjpy*1000;
+  document.getElementById('scenText').innerHTML = s===0 ? 'No change in demand.' : delta<0
+    ? 'About <b>¥'+fmt(Math.abs(delta))+' billion</b> a year (roughly €'+fmt(eurM)+' million) of duty-free sales would leave Japanese department stores. Most of it would be bought at home instead, at full price.'
+    : 'About <b>¥'+fmt(delta)+' billion</b> a year (roughly €'+fmt(eurM)+' million) of extra duty-free sales would come to Japan, sold at a currency discount.';
+  const xs=[]; for(let v=-20; v<=20; v++) xs.push(v);
+  const f=(e,v)=>(Math.pow(1/(1+v/100),e)-1)*100;
+  const cur=Math.round(s*100);
+  const data={labels:xs.map(v=>(v>0?'+':'')+v+'%'),datasets:[
+    {label:'Total duty-free sales',data:xs.map(v=>f(1.75,v)),borderColor:C.indigo,borderWidth:2,pointRadius:xs.map(v=>v===cur?6:0),pointBackgroundColor:C.indigo,tension:.2},
+    {label:'Spending per shopper',data:xs.map(v=>f(1.15,v)),borderColor:C.ochre,borderWidth:2,pointRadius:xs.map(v=>v===cur?6:0),pointBackgroundColor:C.ochre,tension:.2}]};
+  const cl=v=>Math.max(-20,Math.min(20,v)); const lo=(cl(SCEN_RANGE[0])>0?'+':'')+cl(SCEN_RANGE[0])+'%', hi=(cl(SCEN_RANGE[1])>0?'+':'')+cl(SCEN_RANGE[1])+'%';
+  if(scenChart){scenChart.data=data;scenChart.update('none');}
+  else scenChart=new Chart(document.getElementById('cScen'),{type:'line',data,options:{interaction:{mode:'index',intersect:false},
+    scales:{x:Object.assign({},scaleX,{title:{display:true,text:'Yen against the yuan (+ = stronger yen)',color:C.ink2},ticks:{maxRotation:0,autoSkip:false,callback:function(v,i){return xs[i]%10===0?this.getLabelForValue(v):'';}}}),y:scaleY({ticks:{callback:v=>v+'%'}})},
+    plugins:{tooltip:{callbacks:{title:t=>'Yen '+t[0].label,label:c=>c.dataset.label+': '+(c.raw>0?'+':'')+c.raw.toFixed(1)+'%'}}}},
+    plugins:[band(lo,hi,'rgba(44,90,160,.08)')]});
+}
+document.getElementById('scenTitle').textContent='Since 2015 the yen has moved between '+Math.abs(SCEN_RANGE[0])+'% weaker and '+SCEN_RANGE[1]+'% stronger in a year; outside that range the estimate is extrapolation';
+document.getElementById('scenRange').textContent='Yearly moves since 2015 ranged from '+Math.abs(SCEN_RANGE[0])+'% weaker to '+SCEN_RANGE[1]+'% stronger.';
+document.getElementById('fx').oninput=drawScen; drawScen();
+
+// ---------- FORECAST LAB ----------
+// The group's model, refitted in the browser: monthly log change = calendar-month mean + slope × (yen change − its calendar-month mean)
+function runModel(key, trainEnd, alert){
+  const lev = m => byM[m] && byM[m][key];
+  const rows = M.filter(m=>m.insample && lev(m.m) && lev(prevM(m.m)) && m.m<='2026-08')
+                .map(m=>({m:m.m, cm:+m.m.slice(5), x:dlog(m.m,CUR.cny.f), y:Math.log(lev(m.m)/lev(prevM(m.m))), prev:lev(prevM(m.m)), actual:lev(m.m)}))
+                .filter(r=>r.x!=null);
+  const train = rows.filter(r=>r.m>='2015-03' && r.m<=trainEnd), test = rows.filter(r=>r.m>trainEnd);
+  const xm={}, ym={};
+  for(let c=1;c<=12;c++){ const s=train.filter(r=>r.cm===c); xm[c]=avg(s.map(r=>r.x)); ym[c]=avg(s.map(r=>r.y)); }
+  let sxy=0,sxx=0; train.forEach(r=>{sxy+=(r.x-xm[r.cm])*(r.y-ym[r.cm]); sxx+=(r.x-xm[r.cm])**2;});
+  const b=sxy/sxx;
+  const run = withAlert => { const shockErr=[];
+    return test.map(r=>{
+      let yh = ym[r.cm] + b*(r.x - xm[r.cm]);
+      if(withAlert && r.m>='2025-11' && shockErr.length) yh += avg(shockErr);
+      const err = r.y - yh; if(r.m>='2025-11') shockErr.push(err);
+      return {m:r.m, actual:r.actual, fcst:r.prev*Math.exp(yh), err};
+    });
+  };
+  const base = run(false), alt = alert ? run(true) : null;
+  const stats = fc => { const post=fc.filter(f=>f.m>='2025-11');
+    return {rmse:Math.sqrt(avg(fc.map(f=>f.err*f.err))), post:post.length?avg(post.map(f=>f.err)):null, over:post.filter(f=>f.err<0).length, n:post.length}; };
+  return {b, nTrain:train.length, nTest:test.length, base, alt, sBase:stats(base), sAlt:alt?stats(alt):null};
+}
+
+let fcChart;
+function drawFc(){
+  const k=document.getElementById('fcSel').value, end=document.getElementById('fcEnd').value, alert=document.getElementById('fcAlert').checked;
+  const R=runModel(k,end,alert), isS=k==='sales', fc=R.base;
+  const u=v=>isS?'¥'+v.toFixed(1)+' bn':'¥'+fmt(v);
+  const helps = alert && Math.abs(R.sAlt.post) < Math.abs(R.sBase.post) - 0.01;
+  document.getElementById('fcTitle').textContent = alert
+    ? (helps ? 'With a shock alert, the forecast error after November 2025 falls from '+pct(R.sBase.post)+' to '+pct(R.sAlt.post)+' a month'
+             : 'For spending per shopper the alert changes little: the advisory cut the number of Chinese shoppers, not what each one spent')
+    : (isS ? 'The yen-based forecast of duty-free sales ran above actual sales after November 2025' : 'Spending per shopper stayed closer to the forecast than total sales');
+  document.getElementById('fcUnits').textContent = (isS?'Duty-free sales per month, ¥ billion':'Spending per shopper per month, ¥')+'. Trained on '+R.nTrain+' months to '+lab(end)+', slope '+R.b.toFixed(2)+'.';
+  const labels=fc.map(f=>lab(f.m));
+  const ds=[{label:'Actual',data:fc.map(f=>f.actual),borderColor:C.ink,backgroundColor:C.ink},
+            {label:'Forecast',data:fc.map(f=>f.fcst),borderColor:C.indigo,backgroundColor:C.indigo}];
+  if(alert) ds.push({label:'Forecast with shock alert',data:R.alt.map(f=>f.m>='2025-11'?f.fcst:null),borderColor:C.teal,backgroundColor:C.teal,borderDash:[5,4]});
+  const opts={elements:{line:{borderWidth:2,tension:.15},point:{radius:3,hoverRadius:6,borderWidth:1.5,borderColor:C.paper}},
+    interaction:{mode:'index',intersect:false},
+    scales:{x:scaleX,y:scaleY({ticks:{callback:v=>isS?'¥'+v:'¥'+fmt(v)}})},
+    plugins:{tooltip:{filter:t=>t.raw!=null,callbacks:{label:t=>t.dataset.label+': '+u(t.raw)}}}};
+  if(fcChart) fcChart.destroy();
+  fcChart=new Chart(document.getElementById('cFc'),{type:'line',data:{labels,datasets:ds},options:opts,plugins:[marker('Nov 2025')]});
+  document.getElementById('fcKey').innerHTML='<span><i class="ln" style="background:var(--ink)"></i>Actual</span><span><i class="ln" style="background:var(--indigo)"></i>Forecast, one month ahead</span>'+
+    (alert?'<span><i class="dash" style="border-top-color:var(--teal)"></i>Forecast with shock alert</span>':'')+'<span><i class="dash"></i>Travel advisory</span>';
+  document.getElementById('fcNote').textContent='Each forecast uses that month\'s actual exchange rate and the previous month\'s actual figure. Source: group regression, refitted here from JDSA and ECB data.';
+  const row=(name,s)=>'<tr><td>'+name+'</td><td class="n">'+s.rmse.toFixed(3)+'</td><td class="n '+(s.post<0?'neg':'')+'">'+pct(s.post)+'</td><td class="n">'+s.over+' of '+s.n+'</td></tr>';
+  document.getElementById('fcTable').innerHTML='<thead><tr><th>Model</th><th class="n">RMSE</th><th class="n">Mean error</th><th class="n">Too high</th></tr></thead><tbody>'+
+    row('Season + yen',R.sBase)+(alert?row('With shock alert',R.sAlt):'<tr><td colspan="4" style="color:var(--faint)">Switch on the shock alert to compare.</td></tr>')+'</tbody>';
+}
+['fcSel','fcEnd','fcAlert'].forEach(id=>document.getElementById(id).addEventListener('change',drawFc)); drawFc();
+
+// ---------- PRICE GAP ----------
+const fxMonths=M.filter(m=>m.jpykrw), pm=document.getElementById('pMonth');
+fxMonths.slice().reverse().forEach(m=>{const o=document.createElement('option');o.value=m.m;o.textContent=lab(m.m);pm.appendChild(o);});
+const ITEMS={nf:{jp:277200,cn:15800,kr:'',note:'List prices reported in 2026: Japan ¥277,200 (Weekly Luxe Drop, April 2026); mainland China ¥15,800 (Sina, August 2026). We could not verify a Korean price; enter one to add Korean shoppers.'},
+             own:{jp:'',cn:'',kr:'',note:'Enter the list price of one item in each country.'}};
+let gapChart;
+function drawGap(){
+  const pJp=+document.getElementById('pJp').value, pCn=+document.getElementById('pCn').value, pKr=+document.getElementById('pKr').value;
+  const m=fxMonths.find(x=>x.m===pm.value), net=pJp/1.1;
+  const rows=[]; if(pJp&&pCn) rows.push({who:'Chinese shopper',cur:'CNY',home:pCn,jp:net/m.jpycny}); if(pJp&&pKr) rows.push({who:'Korean shopper',cur:'KRW',home:pKr,jp:net/(m.jpykrw/100)});
+  const cell=v=>'<td class="n '+(v<0?'pos':'neg')+'">'+pct(v)+'</td>';
+  document.getElementById('pTable').innerHTML = rows.map(r=>'<tr><td>'+r.who.replace(' shopper','')+'</td><td class="n">'+r.cur+' '+fmt(r.home)+'</td><td class="n">'+r.cur+' '+fmt(r.jp)+'</td>'+cell(r.jp/r.home-1)+'</tr>').join('') || '<tr><td colspan="4" style="color:var(--faint)">Enter a Japanese price and at least one home price.</td></tr>';
+  document.getElementById('gapTitle').textContent = rows.length ? rows.map(r=>(r.who.replace(' shopper','')==='Chinese'?'A Chinese':'A Korean')+' shopper pays '+Math.round(Math.abs(r.jp/r.home-1)*100)+'% '+(r.jp<r.home?'less':'more')+' in Japan').join('; ') : 'Enter prices to compare';
+  document.getElementById('gapSrc').textContent = 'Exchange rate: ECB monthly average for '+lab(m.m)+'. The Japanese price is shown after the 10% consumption-tax refund for tourists.';
+  const data={labels:rows.map(r=>r.who+' ('+r.cur+')'),datasets:[
+    {label:'Price at home',data:rows.map(r=>100),backgroundColor:C.grey,borderRadius:2,barPercentage:.75,categoryPercentage:.7},
+    {label:'Price in Japan after refund',data:rows.map(r=>r.jp/r.home*100),backgroundColor:C.indigo,borderRadius:2,barPercentage:.75,categoryPercentage:.7}]};
+  const opts={indexAxis:'y',layout:{padding:{right:60}},scales:{x:scaleY({min:0,max:120,ticks:{callback:v=>v}}),y:{grid:{display:false},border:{color:C.rule},ticks:{color:C.ink}}},
+    plugins:{tooltip:{callbacks:{label:c=>{const r=rows[c.dataIndex];return c.dataset.label+': '+r.cur+' '+fmt(c.datasetIndex?r.jp:r.home);}}}}};
+  if(gapChart) gapChart.destroy();
+  gapChart=new Chart(document.getElementById('cGap'),{type:'bar',data,options:opts,plugins:[endLabels((v,i)=>v===100?'100':Math.round(v)+'')]});
+}
+document.getElementById('pItem').addEventListener('change',()=>{const it=ITEMS[document.getElementById('pItem').value];
+  document.getElementById('pJp').value=it.jp; document.getElementById('pCn').value=it.cn; document.getElementById('pKr').value=it.kr; document.getElementById('pNote').textContent=it.note; drawGap();});
+['pJp','pCn','pKr','pMonth'].forEach(id=>document.getElementById(id).oninput=drawGap);
+document.getElementById('pNote').textContent=ITEMS.nf.note; drawGap();
+
+// ---------- ORIGIN SPLIT, ALERTS AND WEEKLY BRIEF ----------
+const ORIG = [['cn','China',C.indigo],['kr','South Korea',C.ochre],['tw','Taiwan',C.teal],['oth','Other markets',C.slate]];
+const originShares = m => { const o={cn:m.cn/m.tot, kr:m.kr/m.tot, tw:m.tw/m.tot}; o.oth=Math.max(0,1-o.cn-o.kr-o.tw); return o; };
+const borrowedByOrigin = (rows, base, e) => { const out={cn:0,kr:0,tw:0,oth:0};
+  rows.forEach(m=>{ if(!m.tot) return; const b=Math.max(0,m.sales*share(m,base,e)), s=originShares(m); for(const k in out) out[k]+=b*s[k]; }); return out; };
+
+// Alert rules on the monthly data
+const yoyOf = (m,k) => { const y=+m.slice(0,4), p=(y-1)+m.slice(4); const a=byM[m]&&byM[m][k], b=byM[p]&&byM[p][k]; return a&&b?a/b-1:null; };
+const fcErr = {}; D.forecast.sales.fc.forEach(f=>fcErr[f.m]=Math.exp(f.err)-1);
+const RULES = [
+  {id:'cn', sev:'Critical', name:'Chinese arrivals collapse', test:m=>{const v=yoyOf(m,'cn');return v!=null&&v<=-0.2;}, say:m=>'Chinese arrivals '+pct(yoyOf(m,'cn'),0)+' on a year earlier'},
+  {id:'shop', sev:'Serious', name:'Fewer duty-free shoppers', test:m=>{const v=yoyOf(m,'shop');return v!=null&&v<=-0.1;}, say:m=>'Duty-free shoppers '+pct(yoyOf(m,'shop'),0)+' on a year earlier'},
+];
+const alertMonths = M.filter(m=>m.m>='2023-02' && m.m<=withSales[withSales.length-1].m).map(m=>m.m);
+const lastM = alertMonths[alertMonths.length-1];
+const events = [];
+RULES.forEach(r=>{ alertMonths.forEach(m=>{ if(r.test(m) && !r.test(prevM(m))) events.push({m, r, active:false}); }); });
+// mark a rule's latest event active if the condition still holds in the latest month
+RULES.forEach(r=>{ const ev=events.filter(e=>e.r===r).sort((a,b)=>a.m<b.m?1:-1)[0]; if(ev && r.test(lastM)) ev.active=true; });
+events.sort((a,b)=>a.m<b.m?1:a.m>b.m?-1:0);
+const sevClass = s => s==='Critical'?'crit':s==='Serious'?'ser':'watch';
+const feedItem = e => '<li class="'+sevClass(e.r.sev)+'"><span class="sev"><i></i>'+e.r.sev+'</span><time>'+lab(e.m)+' data</time><span class="what"><b>'+e.r.name+'</b>'+e.r.say(e.m)+'</span><span class="st">'+(e.active?'Still active':'')+'</span></li>';
+const shown = events.filter(e=>e.m>='2024-01').slice(0,10);
+document.getElementById('feed').innerHTML = '<li class="news"><span class="sev"><i></i>News</span><time>14 Nov 2025</time><span class="what"><b>China advises against travel to Japan</b>What the shock reader would pick up from Chinese, Korean and Japanese sources. Not built yet.</span><span class="st"></span></li>'
+  + shown.map(feedItem).join('');
+const activeN = events.filter(e=>e.active).length;
+const activeIds = events.filter(e=>e.active).map(e=>e.r.id);
+document.getElementById('feedTitle').textContent = !activeN ? 'No alerts are active' : (activeIds.every(i=>['cn','shop','fc'].includes(i)) ? (activeN===1?'One alert is':activeN+' alerts are')+' still active, linked to the drop in Chinese visitors' : (activeN===1?'One alert is':activeN+' alerts are')+' still active');
+const firstCn = events.filter(e=>e.r.id==='cn' && e.m>='2025-01').sort((a,b)=>a.m<b.m?-1:1)[0];
+document.getElementById('leadText').textContent = firstCn
+  ? 'The first data alert came from '+lab(firstCn.m)+' figures, published around three weeks after that month ended: about two months after the advisory. The yen gave no warning at all, because it kept weakening. Reading the news in Chinese, Korean and Japanese is how the Radar closes that gap.'
+  : '';
+const preFires = id => events.filter(e=>e.r.id===id && e.m<'2025-11').map(e=>lab(e.m));
+document.getElementById('ruleNote').textContent = (preFires('cn').length ? 'The arrivals rule also fired in '+preFires('cn').join(', ')+'. ' : 'The arrivals rule fired only after the advisory. ')
+  + (preFires('shop').length ? 'The shoppers rule also fired in '+preFires('shop').join(', ')+', without a political shock, so it is a weaker signal. ' : '')
+  + 'A rule on sales against the forecast was dropped: it fired twice in 2025 before any shock.';
+document.getElementById('briefAlerts').innerHTML = events.filter(e=>e.active).slice(0,3).map(feedItem).join('') || '<li>No active alerts.</li>';
+
+// Uncertainty of the elasticity: 95% interval from the explorer's yuan / spending regression
+const ELAS = (()=>{ const pts=D.sa.map(o=>({x:dlog(o.m,CUR.cny.f),y:o.sps})).filter(p=>p.x!=null&&p.y!=null); const c=corr(pts); const t=c.r*Math.sqrt((c.n-2)/(1-c.r*c.r)), se=c.b/t; return {b:1.15, lo:Math.max(0,1.15-1.96*se), hi:1.15+1.96*se}; })();
+const shareAt = (rows,e) => rows.reduce((t,m)=>t+m.sales*share(m,BASE.pre,e),0)/rows.reduce((t,m)=>t+m.sales,0);
+const RNG = {lo:shareAt(last12,ELAS.lo), hi:shareAt(last12,ELAS.hi)};
+{ const rows=withSales.filter(m=>m.m>='2023-01'); const L=rows.map(m=>lab(m.m));
+  document.getElementById('shareTitle').textContent='About '+Math.round(borrowed12/total12*100)+'% of sales would go home if the yen recovered: between '+Math.round(RNG.lo*100)+'% and '+Math.round(RNG.hi*100)+'%';
+  document.getElementById('shareSrc').textContent='The tool\'s estimate, not a finding: it applies the elasticity of spending per shopper to the yen ('+ELAS.b.toFixed(2)+', 95% range '+ELAS.lo.toFixed(2)+' to '+ELAS.hi.toFixed(2)+'). Source: JDSA, ECB; group workbook, Robust_Corr G.';
+  new Chart(document.getElementById('cShare'),{type:'line',data:{labels:L,datasets:[
+    {label:'High',data:rows.map(m=>share(m,BASE.pre,ELAS.hi)*100),borderWidth:0,pointRadius:0,fill:false},
+    {label:'Low',data:rows.map(m=>share(m,BASE.pre,ELAS.lo)*100),borderWidth:0,pointRadius:0,fill:{target:0},backgroundColor:'rgba(44,90,160,.18)'},
+    {label:'Central',data:rows.map(m=>share(m,BASE.pre,1.15)*100),borderColor:C.indigo,borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:.2}]},
+    options:{interaction:{mode:'index',intersect:false},scales:{x:scaleX,y:scaleY({min:0,ticks:{callback:v=>v+'%'}})},
+      plugins:{tooltip:{filter:t=>t.dataset.label==='Central',callbacks:{label:t=>'Borrowed share: '+t.raw.toFixed(0)+'% (range '+(share(rows[t.dataIndex],BASE.pre,ELAS.lo)*100).toFixed(0)+'–'+(share(rows[t.dataIndex],BASE.pre,ELAS.hi)*100).toFixed(0)+'%)'}}}}});
+}
+// Monthly brief
+document.getElementById('briefFor').textContent = 'Monthly brief for the Asia-Pacific team, using data to '+lab(withSales[withSales.length-1].m)+'. Updated when JNTO and JDSA publish the next month, about three weeks after it ends.';
+const bo12 = borrowedByOrigin(last12, BASE.pre, 1.15);
+document.getElementById('b1').innerHTML = Math.round(borrowed12/total12*100)+'%<small>range '+Math.round(RNG.lo*100)+'–'+Math.round(RNG.hi*100)+'%; ¥'+fmt(borrowed12)+' bn of ¥'+fmt(total12)+' bn over the last 12 months</small>';
+document.getElementById('b2').innerHTML = lastFx.jpycny.toFixed(1)+'<small>'+lab(lastFx.m)+', against '+BASE.pre.toFixed(1)+' before COVID</small>';
+document.getElementById('b3').innerHTML = Math.round(cn3*100)+'%<small>last three months, against '+Math.round(cnPre*100)+'% before the advisory</small>';
+document.getElementById('b4').innerHTML = activeN+'<small>'+(activeN?'see Shock alerts':'none since the last brief')+'</small>';
+const topO = ORIG.filter(o=>o[0]!=='oth').sort((a,b)=>bo12[b[0]]-bo12[a[0]]);
+document.getElementById('originTitle').textContent = 'Of the three Asian markets, '+topO[0][1]+' is now the largest source of borrowed demand, and China the smallest';
+new Chart(document.getElementById('cOrigin'),{type:'bar',
+  data:{labels:topO.map(o=>o[1]),datasets:[{data:topO.map(o=>bo12[o[0]]),backgroundColor:topO.map(o=>o[2]),borderRadius:2,barPercentage:.7}]},
+  options:{indexAxis:'y',layout:{padding:{right:70}},scales:{x:scaleY({min:0,ticks:{callback:v=>'¥'+v}}),y:{grid:{display:false},border:{color:C.rule},ticks:{color:C.ink}}},
+    plugins:{tooltip:{callbacks:{label:c=>'¥'+c.raw.toFixed(1)+' bn borrowed'}}}},
+  plugins:[endLabels(v=>'¥'+v.toFixed(0)+' bn')]});
+// shifts: last three months against the same months a year earlier, by origin
+const recent = withSales.slice(-3), yearAgo = recent.map(m=>byM[(+m.m.slice(0,4)-1)+m.m.slice(4)]).filter(Boolean);
+const bNow = borrowedByOrigin(recent, BASE.pre, 1.15), bThen = borrowedByOrigin(yearAgo, BASE.pre, 1.15);
+document.getElementById('shiftUnits').textContent = 'Borrowed demand by origin, '+lab(recent[0].m)+' to '+lab(recent[2].m)+' against a year earlier (estimate)';
+const shifts = ORIG.filter(o=>o[0]!=='oth').map(o=>({o, d:bNow[o[0]]-bThen[o[0]], r:bNow[o[0]]/bThen[o[0]]-1})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+const action = s => s.o[0]==='cn' ? (s.d<0?'Expect fewer Chinese clients in Tokyo and Osaka; brief stores in mainland China on returning clients.':'Chinese demand is returning to Japan.')
+  : (s.d>0?'Shift stock and staff in Japan toward '+(s.o[0]==='kr'?'Korean':'Taiwanese')+' clients.':'Less '+(s.o[0]==='kr'?'Korean':'Taiwanese')+' demand in Japan; check home-market stores.');
+document.getElementById('shifts').innerHTML = shifts.map(s=>'<li><b>'+s.o[1]+': '+(s.d>=0?'+':'−')+'¥'+Math.abs(s.d).toFixed(1)+' bn ('+pct(s.r,0)+')</b><br>'+action(s)+'</li>').join('');
+
+// Scenario: where the demand goes, by origin
+const so12 = (()=>{ const t={cn:0,kr:0,tw:0,oth:0}; let n=0; last12.forEach(m=>{ if(!m.tot) return; const s=originShares(m); for(const k in t) t[k]+=s[k]; n++; }); for(const k in t) t[k]/=n; return t; })();
+function drawScenOrigin(){
+  const s = parseInt(document.getElementById('fx').value)/100, dSales=Math.pow(1/(1+s),1.75)-1, delta=total12*dSales;
+  const el=document.getElementById('scenOrigin');
+  if(s===0){ el.innerHTML='<tr><td colspan="2" style="color:var(--faint)">Move the slider to see where demand goes.</td></tr>'; return; }
+  el.innerHTML='<thead><tr><th>'+(delta<0?'Demand returning to':'Extra demand from')+'</th><th class="n">¥ bn a year</th></tr></thead><tbody>'+
+    ORIG.map(o=>'<tr><td><i class="dot" style="background:'+o[2]+'"></i>'+o[1]+'</td><td class="n">'+fmt(Math.abs(delta*so12[o[0]]))+'</td></tr>').join('')+'</tbody>';
+}
+document.getElementById('fx').addEventListener('input',drawScenOrigin); drawScenOrigin();
+
+// in-page links to other views
+document.querySelectorAll('a[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.go);try{history.replaceState(null,'','#'+a.dataset.go);}catch(err){}}));
+// number exhibits in page order
+document.querySelectorAll('.ex .num').forEach((e,i)=>e.textContent='Exhibit '+(i+1));
+
+drawLedger();
+
+// ---------- ROUTING: switch views on click; keep the hash in sync where the viewer allows it ----------
+const views=['case','ledger','pricegap','shocks','scenario','brief','method'];
+function show(v){
+  if(v==='summary'||v==='evidence') v='case';
+  if(!views.includes(v)) v='case';
+  views.forEach(x=>document.getElementById('s-'+x).classList.toggle('on',x===v));
+  document.querySelectorAll('#nav a').forEach(a=>{const on=a.dataset.view===v;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+  Object.values(Chart.instances).forEach(c=>c.resize());
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#nav a').forEach(a=>{
+  a.dataset.view=a.getAttribute('href').slice(1);
+  a.addEventListener('click',e=>{
+    e.preventDefault(); show(a.dataset.view);
+    try{ history.replaceState(null,'','#'+a.dataset.view); }catch(err){}
+  });
+});
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+show(location.hash.slice(1));
+</script>
+</body>
+</html>
